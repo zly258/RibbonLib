@@ -1,0 +1,622 @@
+{
+  "actions": [
+    {
+      "id": "new",
+      "name": "新建(&N)",
+      "description": "新建文件",
+      "shortcut": "Ctrl+N",
+      "icon": "icons/file/new.png"
+    },
+    {
+      "id": "open",
+      "name": "打开(&O)",
+      "description": "打开文件",
+      "shortcut": "Ctrl+O",
+      "icon": "icons/file/open.png"
+    },
+    {
+      "id": "save",
+      "name": "保存(&S)",
+      "description": "保存文件",
+      "shortcut": "Ctrl+S",
+      "icon": "icons/file/save.png"
+    },
+    {
+      "id": "saveas",
+      "name": "另存(&A)",
+      "description": "文件另存为",
+      "shortcut": "Ctrl+Shift+S",
+      "icon": "icons/file/saveas.png"
+    },
+    {
+      "id": "exit",
+      "name": "退出(&X)",
+      "description": "退出程序",
+      "shortcut": "Alt+F4",
+      "icon": "icons/file/exit.png"
+    },
+    {
+      "id": "print",
+      "name": "打印图纸",
+      "description": "打印图纸",
+      "icon": "icons/file/print.png"
+    },
+    {
+      "id": "line",
+      "name": "直线",
+      "description": "绘制直线",
+      "icon": "icons/2d/line.png"
+    },
+    {
+      "id": "polyline",
+      "name": "多段线",
+      "description": "绘制多段线",
+      "icon": "icons/2d/polyline.png"
+    },
+    {
+      "id": "ellipse",
+      "name": "椭圆",
+      "description": "绘制椭圆",
+      "icon": "icons/2d/ellipse.png"
+    },
+    {
+      "id": "circle",
+      "name": "圆",
+      "description": "绘制圆",
+      "icon": "icons/2d/circle.png"
+    },
+    {
+      "id": "arc",
+      "name": "圆弧",
+      "description": "绘制圆弧",
+      "icon": "icons/2d/arc.png"
+    },
+    {
+      "id": "ellipticalarc",
+      "name": "椭圆弧",
+      "description": "绘制椭圆弧",
+      "icon": "icons/2d/ellipse_arc.png"
+    },
+    {
+      "id": "rectangle",
+      "name": "矩形",
+      "description": "绘制矩形",
+      "icon": "icons/2d/rectangle.png"
+    },
+    {
+      "id": "regularpolygon",
+      "name": "正多边形",
+      "description": "绘制正多边形",
+      "icon": "icons/2d/polygon.png"
+    },
+    {
+      "id": "spline",
+      "name": "样条曲线",
+      "description": "绘制样条曲线",
+      "icon": "icons/2d/spline.png"
+    },
+    {
+      "id": "text",
+      "name": "放置文字",
+      "description": "绘制文字",
+      "icon": "icons/dim/text.png"
+    },
+    {
+      "id": "table",
+      "name": "放置表格",
+      "description": "绘制表格",
+      "icon": "icons/dim/table.png"
+    },
+    {
+      "id": "edittable",
+      "name": "修改表格",
+      "description": "修改表格",
+      "icon": "icons/dim/table.png"
+    },
+    {
+      "id": "lineardim",
+      "name": "线性标注",
+      "description": "绘制线性标注",
+      "icon": "icons/dim/lineardim.png"
+    },
+    {
+      "id": "aligndim",
+      "name": "对齐标注",
+      "description": "绘制对齐标注",
+      "icon": "icons/dim/aligndim.png"
+    },
+    {
+      "id": "angledim",
+      "name": "角度标注",
+      "description": "绘制角度标注",
+      "icon": "icons/dim/angledim.png"
+    },
+    {
+      "id": "radialdim",
+      "name": "半径标注",
+      "description": "绘制半径标注",
+      "icon": "icons/dim/radialdim.png"
+    },
+    {
+      "id": "diameterdim",
+      "name": "直径标注",
+      "description": "绘制直径标注",
+      "icon": "icons/dim/diameterdim.png"
+    },
+    {
+      "id": "leaderdim",
+      "name": "引线标注",
+      "description": "绘制引线标注",
+      "icon": "icons/dim/leaderdim.png"
+    },
+    {
+      "id": "block",
+      "name": "创建块",
+      "description": "创建块",
+      "icon": "icons/block/block.png"
+    },
+    {
+      "id": "insertblock",
+      "name": "插入块",
+      "description": "插入块",
+      "icon": "icons/block/insertblock.png"
+    },
+    {
+      "id": "box",
+      "name": "长方体",
+      "description": "绘制长方体",
+      "icon": "icons/3d/box.png"
+    },
+    {
+      "id": "cone",
+      "name": "圆锥",
+      "description": "绘制圆锥",
+      "icon": "icons/3d/cone.png"
+    },
+    {
+      "id": "cylinder",
+      "name": "圆柱",
+      "description": "绘制圆柱",
+      "icon": "icons/3d/cylinder.png"
+    },
+    {
+      "id": "sphere",
+      "name": "球体",
+      "description": "绘制球体",
+      "icon": "icons/3d/sphere.png"
+    },
+    {
+      "id": "torus",
+      "name": "圆环",
+      "description": "绘制圆环",
+      "icon": "icons/3d/torus.png"
+    },
+    {
+      "id": "extrude",
+      "name": "拉伸",
+      "description": "拉伸",
+      "icon": "icons/3d/extrude.png"
+    },
+    {
+      "id": "revolve",
+      "name": "旋转",
+      "description": "旋转",
+      "icon": "icons/3d/revolve.png"
+    },
+    {
+      "id": "sweep",
+      "name": "扫掠",
+      "description": "扫掠",
+      "icon": "icons/3d/sweep.png"
+    },
+    {
+      "id": "loft",
+      "name": "放样",
+      "description": "放样",
+      "icon": "icons/3d/loft.png"
+    },
+    {
+      "id": "booleanunion",
+      "name": "并集",
+      "description": "并集",
+      "icon": "icons/3d/union.png"
+    },
+    {
+      "id": "booleansubstract",
+      "name": "差集",
+      "description": "差集",
+      "icon": "icons/3d/subtract.png"
+    },
+    {
+      "id": "booleanintersect",
+      "name": "交集",
+      "description": "交集",
+      "icon": "icons/3d/intersect.png"
+    },
+    {
+      "id": "placescript",
+      "name": "放置",
+      "description": "放置脚本",
+      "icon": "icons/tool/script.png"
+    },
+    {
+      "id": "editscript",
+      "name": "编辑",
+      "description": "编辑脚本",
+      "icon": "icons/edit/edit.png"
+    },
+    {
+      "id": "undo",
+      "name": "撤销",
+      "description": "撤销",
+      "shortcut": "Ctrl+Z",
+      "icon": "icons/edit/undo.png"
+    },
+    {
+      "id": "redo",
+      "name": "重做",
+      "description": "重做",
+      "shortcut": "Ctrl+Y",
+      "icon": "icons/edit/redo.png"
+    },
+    {
+      "id": "move",
+      "name": "移动",
+      "description": "移动",
+      "icon": "icons/edit/move.png"
+    },
+    {
+      "id": "copy",
+      "name": "复制",
+      "description": "复制",
+      "icon": "icons/edit/copy.png"
+    },
+    {
+      "id": "rotate",
+      "name": "旋转",
+      "description": "旋转",
+      "icon": "icons/edit/rotate.png"
+    },
+    {
+      "id": "scale",
+      "name": "缩放",
+      "description": "缩放",
+      "icon": "icons/edit/scale.png"
+    },
+    {
+      "id": "mirror",
+      "name": "镜像",
+      "description": "镜像",
+      "icon": "icons/edit/mirror.png"
+    },
+    {
+      "id": "rectarray",
+      "name": "矩形阵列",
+      "description": "矩形阵列",
+      "icon": "icons/edit/rectarray.png"
+    },
+    {
+      "id": "circlearray",
+      "name": "圆形阵列",
+      "description": "圆形阵列",
+      "icon": "icons/edit/circlearray.png"
+    },
+    {
+      "id": "patharray",
+      "name": "路径阵列",
+      "description": "路径阵列",
+      "icon": "icons/edit/patharray.png"
+    },
+    {
+      "id": "delete",
+      "name": "删除",
+      "description": "删除",
+      "icon": "icons/edit/delete.png",
+      "shortcut": "Del"
+    },
+    {
+      "id": "test",
+      "name": "测试",
+      "description": "测试"
+    },
+    {
+      "id": "viewtop",
+      "name": "顶视",
+      "description": "切换到顶视图",
+      "icon": "icons/view/top.png"
+    },
+    {
+      "id": "viewbottom",
+      "name": "底视",
+      "description": "切换到底视图",
+      "icon": "icons/view/bottom.png"
+    },
+    {
+      "id": "viewfront",
+      "name": "前视",
+      "description": "切换到前视图",
+      "icon": "icons/view/front.png"
+    },
+    {
+      "id": "viewback",
+      "name": "后视",
+      "description": "切换到后视图",
+      "icon": "icons/view/back.png"
+    },
+    {
+      "id": "viewleft",
+      "name": "左视",
+      "description": "切换到左视图",
+      "icon": "icons/view/left.png"
+    },
+    {
+      "id": "viewright",
+      "name": "右视",
+      "description": "切换到右视图",
+      "icon": "icons/view/right.png"
+    },
+    {
+      "id": "viewse",
+      "name": "东南",
+      "description": "切换到东南视图",
+      "icon": "icons/view/seiso.png"
+    },
+    {
+      "id": "viewsw",
+      "name": "西南",
+      "description": "切换到西南视图",
+      "icon": "icons/view/swiso.png"
+    },
+    {
+      "id": "viewnw",
+      "name": "西北",
+      "description": "切换到西北视图",
+      "icon": "icons/view/nwiso.png"
+    },
+    {
+      "id": "viewne",
+      "name": "东北",
+      "description": "切换到东北视图",
+      "icon": "icons/view/neiso.png"
+    },
+    {
+      "id": "wireframe",
+      "name": "线框",
+      "description": "切换到线框模式",
+      "icon": "icons/view/wireframe.png"
+    },
+    {
+      "id": "shaded",
+      "name": "着色",
+      "description": "切换到着色模式",
+      "icon": "icons/view/shaded.png"
+    },
+    {
+      "id": "regen",
+      "name": "重生成",
+      "description": "重生成"
+    },
+    {
+      "id": "selectall",
+      "name": "全选",
+      "description": "全选",
+      "shortcut": "Ctrl+A",
+      "icon": "icons/edit/selectall.png"
+    },
+    {
+      "id": "selectinvert",
+      "name": "反选",
+      "description": "反选",
+      "shortcut": "Ctrl+I"
+    },
+    {
+      "id": "hide",
+      "name": "隐藏",
+      "description": "隐藏"
+    },
+    {
+      "id": "isolate",
+      "name": "隔离",
+      "description": "隔离"
+    },
+    {
+      "id": "showall",
+      "name": "显示所有",
+      "description": "显示所有"
+    },
+    {
+      "id": "settings",
+      "name": "设置",
+      "icon": "icons/ui/setting.png",
+      "description": "打开设置对话框"
+    },
+    {
+      "id": "about",
+      "name": "关于",
+      "icon": "icons/ui/about.png",
+      "description": "关于本软件"
+    },
+    {
+      "id": "resetdocks",
+      "name": "重置窗口",
+      "icon": "icons/ui/layout.png",
+      "description": "重置窗口"
+    },
+    {
+      "id": "dist",
+      "name": "测量距离",
+      "description": "测量距离",
+      "icon": "icons/measure/measuredistance.png"
+    },
+    {
+      "id": "measure",
+      "name": "测量元素",
+      "description": "测量边、面、体",
+      "icon": "icons/measure/measure3d.png"
+    },
+    {
+      "id": "textstyle",
+      "name": "文字样式",
+      "description": "文字样式",
+      "icon": "icons/dim/textstyle.png"
+    },
+    {
+      "id": "dimstyle",
+      "name": "标注样式",
+      "description": "标注样式",
+      "icon": "icons/dim/dimstyle.png"
+    },
+    {
+      "id": "editproperty",
+      "name": "批量编辑",
+      "description": "批量编辑",
+      "icon": "icons/edit/editproperty.png"
+    },
+    {
+      "id": "model",
+      "name": "模型",
+      "description": "模型",
+      "icon": "icons/manager/model.png"
+    },
+    {
+      "id": "layer",
+      "name": "图层",
+      "description": "图层",
+      "icon": "icons/manager/layer.png"
+    },
+    {
+      "id": "property",
+      "name": "属性",
+      "description": "属性",
+      "icon": "icons/manager/property.png"
+    },
+    {
+      "id": "importstep",
+      "name": "导入STEP",
+      "description": "导入STEP"
+    },
+    {
+      "id": "importiges",
+      "name": "导入IGES",
+      "description": "导入IGES"
+    },
+    {
+      "id": "exportstep",
+      "name": "导出STEP",
+      "description": "导出STEP"
+    },
+    {
+      "id": "exportiges",
+      "name": "导出IGES",
+      "description": "导出IGES"
+    },
+    {
+      "id": "creategrid",
+      "name": "创建轴网",
+      "description": "创建轴网",
+      "icon": "icons/ps/grid.png"
+    },
+    {
+      "id": "editgrid",
+      "name": "编辑轴网",
+      "description": "编辑轴网",
+      "icon": "icons/ps/editgrid.png"
+    },
+    {
+      "id": "column",
+      "name": "柱子",
+      "description": "柱子",
+      "icon": "icons/ps/column.png"
+    },
+    {
+      "id": "foundation",
+      "name": "基础",
+      "description": "基础",
+      "icon": "icons/ps/foundation.png"
+    },
+    {
+      "id": "pipesystem",
+      "name": "管道系统",
+      "description": "管道系统",
+      "icon": "icons/pipe/PipelineManagerIcon.png"
+    },
+    {
+      "id": "hvacsystem",
+      "name": "通风系统",
+      "description": "通风系统",
+      "icon": "icons/hvac/HVACSystemManager.png"
+    },
+    {
+      "id": "component",
+      "name": "首选项",
+      "description": "首选项",
+      "icon": "icons/ui/StandardPreferences.png"
+    },
+    {
+      "id": "placepipe",
+      "name": "管道",
+      "description": "管道",
+      "icon": "icons/pipe/Pipe.png"
+    },
+    {
+      "id": "placeduct",
+      "name": "绘制风管",
+      "description": "绘制风管",
+      "icon": "icons/hvac/HVAC_RECTANGULAR_DUCT.png"
+    },
+    {
+      "id": "hvacconnect",
+      "name": "风管连接",
+      "description": "风管连接",
+      "icon": "icons/pipe/OPJoin.png"
+    },
+    {
+      "id": "hvacbreak",
+      "name": "风管打断",
+      "description": "风管打断",
+      "icon": "icons/pipe/OPBreak.png"
+    },
+    {
+      "id": "hvacmove",
+      "name": "风管移动",
+      "description": "风管移动",
+      "icon": "icons/pipe/OPMove.png"
+    },
+    {
+      "id": "placehvaccomponent",
+      "name": "绘制风管组件",
+      "description": "绘制风管组件",
+      "icon": "icons/hvac/HVAC_COMPONENT.png"
+    },
+    {
+      "id": "steel",
+      "name": "型钢",
+      "description": "型钢",
+      "icon": "icons/ps/steel.png"
+    },
+    {
+      "id": "steelsection",
+      "name": "截面定义",
+      "description": "截面定义",
+      "icon": "icons/ps/steelsection.png"
+    },
+    {
+      "id": "steelspec",
+      "name": "型钢规格",
+      "description": "型钢规格",
+      "icon": "icons/ps/steelspec.png"
+    },
+    {
+      "id": "placepidpipe",
+      "name": "PID管道",
+      "description": "绘制PID管道",
+      "icon": "icons/pid/pidline.png"
+    },
+    {
+      "id": "insertpidsymbol",
+      "name": "PID符号",
+      "description": "插入PID符号",
+      "icon": "icons/pid/pidsymbol.png"
+    }
+  ]
+}

@@ -1,0 +1,516 @@
+{
+  "ribbon": {
+    "applicationButton": {
+      "title": "File",
+      "menu": [
+        {
+          "id": "new",
+          "style": "small"
+        },
+        {
+          "id": "open",
+          "style": "small"
+        },
+        {
+          "id": "save",
+          "style": "small"
+        },
+        {
+          "id": "saveas",
+          "style": "small"
+        },
+        "-",
+        {
+          "id": "exit",
+          "style": "normal"
+        }
+      ]
+    },
+    "tabs": [
+      {
+        "id": "home",
+        "title": "Home",
+        "panels": [
+          {
+            "id": "edit",
+            "title": "Edit",
+            "isSupport2D": true,
+            "items": [
+              {
+                "id": "delete",
+                "isSupport2D": true,
+                "style": "large"
+              },
+              {
+                "id": "selectall",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "move",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "copy",
+                "style": "small"
+              },
+              {
+                "id": "rotate",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "scale",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "mirror",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "rectarray",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "circlearray",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "patharray",
+                "isSupport2D": true,
+                "style": "small"
+              }
+            ]
+          },
+          {
+            "id": "basic",
+            "title": "Basic",
+            "isSupport2D": true,
+            "items": [
+              {
+                "id": "model",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "layer",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "property",
+                "isSupport2D": true,
+                "style": "small"
+              }
+            ]
+          },
+          {
+            "id": "2d",
+            "isSupport2D": true,
+            "title": "2D Drafting",
+            "items": [
+              {
+                "id": "line",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "polyline",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "circle",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "arc",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "ellipse",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "ellipticalarc",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "rectangle",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "regularpolygon",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "spline",
+                "isSupport2D": true,
+                "style": "small"
+              }
+            ]
+          },
+          {
+            "id": "2d",
+            "title": "3D Primitives",
+            "items": [
+              {
+                "id": "box",
+                "style": "small"
+              },
+              {
+                "id": "cylinder",
+                "style": "small"
+              },
+              {
+                "id": "cone",
+                "style": "small"
+              },
+              {
+                "id": "sphere",
+                "style": "small"
+              },
+              {
+                "id": "torus",
+                "style": "small"
+              },
+              {
+                "id": "extrude",
+                "style": "small"
+              },
+              {
+                "id": "revolve",
+                "style": "small"
+              },
+              {
+                "id": "sweep",
+                "style": "small"
+              },
+              {
+                "id": "loft",
+                "style": "small"
+              }
+            ]
+          },
+          {
+            "id": "boolean",
+            "title": "Boolean",
+            "items": [
+              {
+                "id": "booleanunion",
+                "style": "small"
+              },
+              {
+                "id": "booleansubstract",
+                "style": "small"
+              },
+              {
+                "id": "booleanintersect",
+                "style": "small"
+              }
+            ]
+          },
+          {
+            "id": "script",
+            "title": "Script",
+            "items": [
+              {
+                "id": "placescript",
+                "style": "small"
+              },
+              {
+                "id": "editscript",
+                "style": "small"
+              }
+            ]
+          },
+          {
+            "id": "measure",
+            "isSupport2D": true,
+            "title": "Measure",
+            "items": [
+              {
+                "id": "dist",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "measure",
+                "isSupport2D": true,
+                "style": "small"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "dim",
+        "title": "Annotate",
+        "panels": [
+          {
+            "id": "style",
+            "title": "Styles",
+            "items": [
+              {
+                "id": "textstyle",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "dimstyle",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "editproperty",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "print",
+                "isSupport2D": true,
+                "style": "small"
+              }
+            ]
+          },
+          {
+            "id": "block",
+            "title": "Block",
+            "items": [
+              {
+                "id": "block",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "insertblock",
+                "isSupport2D": true,
+                "style": "small"
+              }
+            ]
+          },
+          {
+            "id": "dim",
+            "title": "Dimensions",
+            "items": [
+              {
+                "id": "text",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "table",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "edittable",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "lineardim",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "aligndim",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "radialdim",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "diameterdim",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "angledim",
+                "isSupport2D": true,
+                "style": "small"
+              },
+              {
+                "id": "leaderdim",
+                "isSupport2D": true,
+                "style": "small"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bim",
+        "title": "Specialty",
+        "panels": [
+          {
+            "id": "structure",
+            "title": "Structure",
+            "items": [
+              {
+                "id": "creategrid",
+                "style": "large"
+              },
+              {
+                "id": "editgrid",
+                "style": "large"
+              },
+              {
+                "id": "steel",
+                "style": "small"
+              },
+              {
+                "id": "column",
+                "style": "small"
+              },
+              {
+                "id": "foundation",
+                "style": "small"
+              }
+            ]
+          },
+          {
+            "id": "section",
+            "title": "Section",
+            "items": [
+              {
+                "id": "steelsection",
+                "style": "large"
+              },
+              {
+                "id": "steelspec",
+                "style": "large"
+              }
+            ]
+          },
+          {
+            "id": "standard",
+            "title": "Preferences",
+            "items": [
+              {
+                "id": "component",
+                "style": "large"
+              },
+              {
+                "id": "pipesystem",
+                "style": "large"
+              },
+              {
+                "id": "hvacsystem",
+                "style": "large"
+              }
+            ]
+          },
+          {
+            "id": "pipe",
+            "title": "Piping",
+            "items": [
+              {
+                "id": "placepipe",
+                "style": "large"
+              }
+            ]
+          },
+          {
+            "id": "pid",
+            "title": "P&ID",
+            "items": [
+              {
+                "id": "placepidpipe",
+                "style": "large"
+              },
+              {
+                "id": "insertpidsymbol",
+                "style": "large"
+              }
+            ]
+          },
+          {
+            "id": "hvac",
+            "title": "HVAC",
+            "items": [
+              {
+                "id": "placeduct",
+                "style": "large"
+              },
+              {
+                "id": "hvacconnect",
+                "style": "small"
+              },
+              {
+                "id": "hvacbreak",
+                "style": "small"
+              },
+              {
+                "id": "hvacmove",
+                "style": "small"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "settings",
+        "title": "Settings",
+        "isSupport2D": true,
+        "panels": [
+          {
+            "id": "settings",
+            "title": "Settings",
+            "isSupport2D": true,
+            "items": [
+              {
+                "id": "resetdocks",
+                "isSupport2D": true,
+                "style": "large"
+              },
+              {
+                "id": "settings",
+                "isSupport2D": true,
+                "style": "large"
+              },
+              {
+                "id": "about",
+                "isSupport2D": true,
+                "style": "large"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "quickAccessBar": {
+      "items": [
+        {
+          "id": "new"
+        },
+        {
+          "id": "open"
+        },
+        {
+          "id": "save"
+        },
+        {
+          "id": "undo"
+        },
+        {
+          "id": "redo"
+        }
+      ]
+    }
+  }
+}
