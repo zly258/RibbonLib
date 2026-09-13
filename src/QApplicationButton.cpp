@@ -1,14 +1,15 @@
 #include "QApplicationButton.h"
+#include "QRibbonMetrics.h"
+#include "QRibbonStyle.h"
 
-#include <QPaintEvent>
 #include <QFontMetrics>
+#include <QMenu>
 
 QApplicationButton::QApplicationButton(QWidget *parent)
     : QToolButton(parent)
 {
     setObjectName("ApplicationButton");
-    // Width adapts naturally to text length; height aligns with the TabBar.
-    setFixedHeight(29);
+    setFixedHeight(QRibbonMetrics::TopBarHeight);
     setPopupMode(QToolButton::InstantPopup);
     setToolButtonStyle(Qt::ToolButtonTextOnly);
     setText("File");
@@ -20,28 +21,27 @@ void QApplicationButton::setApplicationMenu(QMenu *menu)
     if (m_menu && m_menu->parent() == this) {
         m_menu->deleteLater();
     }
+
     m_menu = menu;
+    if (m_menu) {
+        m_menu->setObjectName(QStringLiteral("RibbonApplicationMenu"));
+        QRibbonStyle::applyMenuStyle(m_menu);
+    }
     setMenu(menu);
 }
 
 QSize QApplicationButton::sizeHint() const
 {
-    QFontMetrics fm(font());
-    const int textWidth = fm.horizontalAdvance(text());
-    const int horizontalPadding = 24;
-    const int menuReserve = menu() ? 0 : 0;
-    const int width = qMax(44, textWidth + horizontalPadding + menuReserve);
-    return QSize(width, 29);
+    const QFontMetrics fm(font());
+    const int width = qMax(QRibbonMetrics::LargeButtonMinWidth,
+                           fm.horizontalAdvance(text()) + 24);
+    return QSize(width, QRibbonMetrics::TopBarHeight);
 }
 
 QSize QApplicationButton::minimumSizeHint() const
 {
-    QFontMetrics fm(font());
-    const int textWidth = fm.horizontalAdvance(text());
-    return QSize(qMax(44, textWidth + 18), 29);
-}
-
-void QApplicationButton::paintEvent(QPaintEvent *event)
-{
-    QToolButton::paintEvent(event);
+    const QFontMetrics fm(font());
+    const int width = qMax(QRibbonMetrics::LargeButtonMinWidth,
+                           fm.horizontalAdvance(text()) + 18);
+    return QSize(width, QRibbonMetrics::TopBarHeight);
 }

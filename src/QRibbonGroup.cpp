@@ -1,20 +1,14 @@
 #include "QRibbonGroup.h"
+#include "QRibbonButton.h"
+#include "QRibbonMetrics.h"
 
-#include <QFrame>
 #include <QFontMetrics>
+#include <QFrame>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLayoutItem>
 #include <QVBoxLayout>
-
-/*
- * QRibbonGroup Implementation Notes
- * ------------------------------------------------------------
- * 1. Enforces a fixed height only; does not enforce a fixed width.
- * 2. Width is determined naturally by internal buttons, separators, small columns, and title.
- * 3. Small buttons are arranged in 3-row columns whose width equals the widest button.
- */
 
 QRibbonGroup::QRibbonGroup(const QString &title, QWidget *parent)
     : QFrame(parent)
@@ -31,30 +25,33 @@ void QRibbonGroup::setupLayout()
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 
     m_mainLayout = new QVBoxLayout(this);
-    m_mainLayout->setContentsMargins(3, 2, 3, 0);
+    m_mainLayout->setContentsMargins(QRibbonMetrics::GroupHorizontalPadding,
+                                     2,
+                                     QRibbonMetrics::GroupHorizontalPadding,
+                                     0);
     m_mainLayout->setSpacing(0);
 
     m_contentWidget = new QWidget(this);
     m_contentWidget->setObjectName("RibbonGroupContent");
     m_contentWidget->setAttribute(Qt::WA_StyledBackground, true);
     m_contentWidget->setAutoFillBackground(false);
-    m_contentWidget->setFixedHeight(72);
+    m_contentWidget->setFixedHeight(QRibbonMetrics::GroupContentHeight);
 
     m_contentLayout = new QHBoxLayout(m_contentWidget);
-    m_contentLayout->setContentsMargins(1, 0, 1, 0);
-    m_contentLayout->setSpacing(1);
+    m_contentLayout->setContentsMargins(0, 0, 0, 0);
+    m_contentLayout->setSpacing(QRibbonMetrics::GroupContentSpacing);
     m_contentLayout->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     m_mainLayout->addWidget(m_contentWidget);
 
     m_titleLabel = new QLabel(m_title, this);
     m_titleLabel->setObjectName("RibbonGroupTitle");
     m_titleLabel->setAlignment(Qt::AlignCenter | Qt::AlignBottom);
-    m_titleLabel->setFixedHeight(18);
+    m_titleLabel->setFixedHeight(QRibbonMetrics::GroupTitleHeight);
     m_titleLabel->setWordWrap(false);
     m_titleLabel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     m_mainLayout->addWidget(m_titleLabel);
 
-    setFixedHeight(96);
+    setFixedHeight(QRibbonMetrics::ContentHeight);
     updateContentWidth();
 }
 
@@ -84,25 +81,17 @@ void QRibbonGroup::updateContentWidth()
         contentWidth += margins.left() + margins.right();
 
         int visibleItemCount = 0;
-
         for (int i = 0; i < m_contentLayout->count(); ++i) {
             QLayoutItem *item = m_contentLayout->itemAt(i);
-            if (!item) {
-                continue;
-            }
+            if (!item) continue;
 
             int itemWidth = 0;
-
             if (QWidget *widget = item->widget()) {
-                itemWidth = qMax(widget->sizeHint().width(),
-                                 widget->minimumSizeHint().width());
+                itemWidth = qMax(widget->sizeHint().width(), widget->minimumSizeHint().width());
             } else if (QLayout *layout = item->layout()) {
                 for (int j = 0; j < layout->count(); ++j) {
                     QLayoutItem *child = layout->itemAt(j);
-                    if (!child || !child->widget()) {
-                        continue;
-                    }
-
+                    if (!child || !child->widget()) continue;
                     QWidget *childWidget = child->widget();
                     itemWidth = qMax(itemWidth,
                                      qMax(childWidget->sizeHint().width(),
@@ -121,11 +110,13 @@ void QRibbonGroup::updateContentWidth()
         }
     }
 
+    const int groupPadding = QRibbonMetrics::GroupHorizontalPadding * 2;
     const int titleWidth = m_titleLabel
-        ? QFontMetrics(m_titleLabel->font()).horizontalAdvance(m_title) + 12
-        : 45;
+        ? QFontMetrics(m_titleLabel->font()).horizontalAdvance(m_title) + groupPadding + 4
+        : QRibbonMetrics::LargeButtonMinWidth;
 
-    const int newWidth = qMax(45, qMax(contentWidth + 6, titleWidth));
+    const int newWidth = qMax(QRibbonMetrics::LargeButtonMinWidth,
+                              qMax(contentWidth + groupPadding, titleWidth));
     if (m_contentWidth == newWidth) {
         updateGeometry();
         return;
@@ -138,19 +129,17 @@ void QRibbonGroup::updateContentWidth()
 
 QSize QRibbonGroup::sizeHint() const
 {
-    return QSize(m_contentWidth, 96);
+    return QSize(m_contentWidth, QRibbonMetrics::ContentHeight);
 }
 
 QSize QRibbonGroup::minimumSizeHint() const
 {
-    return QSize(m_contentWidth, 96);
+    return QSize(m_contentWidth, QRibbonMetrics::ContentHeight);
 }
 
 void QRibbonGroup::addButton(QRibbonButton *button)
 {
-    if (!button) {
-        return;
-    }
+    if (!button) return;
 
     if (button->buttonSize() == QRibbonButtonSize::Large) {
         addLargeWidget(button);
@@ -161,17 +150,17 @@ void QRibbonGroup::addButton(QRibbonButton *button)
 
 void QRibbonGroup::addButton(const QIcon &icon, const QString &text, QRibbonButtonSize size)
 {
-    QRibbonButton *button = new QRibbonButton(icon, text, size, this);
+    auto *button = new QRibbonButton(icon, text, size, this);
     addButton(button);
 }
 
 void QRibbonGroup::addSeparator()
 {
-    QFrame *separator = new QFrame(this);
+    auto *separator = new QFrame(this);
     separator->setObjectName("RibbonGroupSeparator");
     separator->setFrameShape(QFrame::VLine);
     separator->setFrameShadow(QFrame::Plain);
-    separator->setFixedSize(1, 68);
+    separator->setFixedSize(1, QRibbonMetrics::GroupSeparatorHeight);
 
     if (m_contentLayout) {
         m_contentLayout->addWidget(separator);
@@ -182,51 +171,44 @@ void QRibbonGroup::addSeparator()
 
 void QRibbonGroup::addWidget(QWidget *widget)
 {
-    if (!widget || !m_contentLayout) {
-        return;
-    }
+    if (!widget || !m_contentLayout) return;
 
     widget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     m_contentLayout->addWidget(widget);
-
     markContentAdded();
 }
 
 void QRibbonGroup::addLargeWidget(QWidget *widget)
 {
-    if (!widget || !m_contentLayout) {
-        return;
-    }
+    if (!widget || !m_contentLayout) return;
 
     m_currentSmallColumnWidget = nullptr;
     m_currentSmallColumnLayout = nullptr;
     m_currentSmallRow = 0;
 
     widget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-    widget->setFixedHeight(72);
+    widget->setFixedHeight(QRibbonMetrics::LargeButtonHeight);
     m_contentLayout->addWidget(widget);
-
     markContentAdded();
 }
 
 void QRibbonGroup::addSmallWidget(QWidget *widget)
 {
-    if (!widget || !m_contentLayout) {
-        return;
-    }
+    if (!widget || !m_contentLayout) return;
 
-    if (!m_currentSmallColumnWidget || !m_currentSmallColumnLayout || m_currentSmallRow >= 3) {
+    if (!m_currentSmallColumnWidget || !m_currentSmallColumnLayout
+        || m_currentSmallRow >= QRibbonMetrics::SmallRowCount) {
         m_currentSmallColumnWidget = new QWidget(m_contentWidget);
         m_currentSmallColumnWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-        m_currentSmallColumnWidget->setFixedHeight(72);
+        m_currentSmallColumnWidget->setFixedHeight(QRibbonMetrics::GroupContentHeight);
 
         m_currentSmallColumnLayout = new QGridLayout(m_currentSmallColumnWidget);
         m_currentSmallColumnLayout->setContentsMargins(0, 0, 0, 0);
         m_currentSmallColumnLayout->setHorizontalSpacing(0);
-        m_currentSmallColumnLayout->setVerticalSpacing(1);
+        m_currentSmallColumnLayout->setVerticalSpacing(QRibbonMetrics::SmallRowSpacing);
 
-        for (int row = 0; row < 3; ++row) {
-            m_currentSmallColumnLayout->setRowMinimumHeight(row, 22);
+        for (int row = 0; row < QRibbonMetrics::SmallRowCount; ++row) {
+            m_currentSmallColumnLayout->setRowMinimumHeight(row, QRibbonMetrics::SmallRowHeight);
             m_currentSmallColumnLayout->setRowStretch(row, 0);
         }
 
@@ -235,15 +217,13 @@ void QRibbonGroup::addSmallWidget(QWidget *widget)
     }
 
     widget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-    widget->setFixedHeight(22);
+    widget->setFixedHeight(QRibbonMetrics::SmallButtonHeight);
     m_currentSmallColumnLayout->addWidget(widget, m_currentSmallRow, 0);
 
     int columnWidth = 0;
     for (int i = 0; i < m_currentSmallColumnLayout->count(); ++i) {
         QLayoutItem *item = m_currentSmallColumnLayout->itemAt(i);
-        if (!item || !item->widget()) {
-            continue;
-        }
+        if (!item || !item->widget()) continue;
 
         QWidget *childWidget = item->widget();
         columnWidth = qMax(columnWidth,
@@ -254,7 +234,7 @@ void QRibbonGroup::addSmallWidget(QWidget *widget)
     m_currentSmallColumnWidget->setMinimumWidth(columnWidth);
 
     ++m_currentSmallRow;
-    if (m_currentSmallRow >= 3) {
+    if (m_currentSmallRow >= QRibbonMetrics::SmallRowCount) {
         m_currentSmallColumnWidget = nullptr;
         m_currentSmallColumnLayout = nullptr;
         m_currentSmallRow = 0;
@@ -265,9 +245,7 @@ void QRibbonGroup::addSmallWidget(QWidget *widget)
 
 void QRibbonGroup::setTitle(const QString &title)
 {
-    if (m_title == title) {
-        return;
-    }
+    if (m_title == title) return;
 
     m_title = title;
     if (m_titleLabel) {

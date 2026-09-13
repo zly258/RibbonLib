@@ -1,0 +1,128 @@
+{
+  "ribbon": {
+    "applicationButton": {
+      "title": "文件",
+      "menu": [
+        { "id": "file.new" },
+        { "id": "file.open" },
+        { "id": "file.save" },
+        "-",
+        { "id": "language.switch" },
+        { "id": "help.about" },
+        "-",
+        { "id": "file.close" }
+      ]
+    },
+    "quickAccessBar": {
+      "items": [
+        { "id": "file.save" },
+        { "id": "edit.undo" },
+        { "id": "edit.redo" },
+        { "id": "language.switch" }
+      ]
+    },
+    "tabs": [
+      {
+        "id": "home",
+        "title": "主页",
+        "panels": [
+          {
+            "title": "文档",
+            "items": [
+              { "id": "file.new", "style": "large" },
+              { "id": "file.open", "style": "large" },
+              { "id": "file.save", "style": "large" }
+            ]
+          },
+          {
+            "title": "剪贴板",
+            "items": [
+              { "id": "edit.paste", "style": "large" },
+              { "id": "edit.cut", "style": "small" },
+              { "id": "edit.copy", "style": "small" },
+              { "id": "edit.selectAll", "style": "small" }
+            ]
+          },
+          {
+            "title": "编辑",
+            "items": [
+              { "id": "edit.undo", "style": "small" },
+              { "id": "edit.redo", "style": "small" },
+              { "id": "edit.find", "style": "small" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "insert",
+        "title": "插入",
+        "panels": [
+          {
+            "title": "内容",
+            "items": [
+              {
+                "id": "insert.content",
+                "style": "large",
+                "defaultId": "insert.heading",
+                "menu": [
+                  { "id": "insert.heading" },
+                  { "id": "insert.list" },
+                  { "id": "insert.table" }
+                ]
+              },
+              { "id": "insert.link", "style": "large" },
+              { "id": "insert.date", "style": "large" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "view",
+        "title": "视图",
+        "panels": [
+          {
+            "title": "缩放",
+            "items": [
+              { "id": "view.zoomIn", "style": "small" },
+              { "id": "view.zoomOut", "style": "small" },
+              { "id": "view.resetZoom", "style": "small" }
+            ]
+          },
+          {
+            "title": "窗口",
+            "items": [
+              { "id": "view.fullscreen", "style": "large" },
+              { "id": "view.readOnly", "style": "large" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tools",
+        "title": "工具",
+        "panels": [
+          {
+            "title": "实用工具",
+            "items": [
+              { "id": "tools.refresh", "style": "large" },
+              { "id": "tools.settings", "style": "large" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "help",
+        "title": "帮助",
+        "panels": [
+          {
+            "title": "帮助",
+            "items": [
+              { "id": "help.about", "style": "large" },
+              { "id": "language.switch", "style": "large" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

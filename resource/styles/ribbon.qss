@@ -1,213 +1,161 @@
-/*
-    RibbonLib Office-like light style
-    ------------------------------------------------------------
-    Maintenance principles:
-    1. Colors, borders, hover, pressed, checked, and disabled states are centralized here.
-    2. C++ code is solely responsible for layout, hit testing, icons, and text rendering.
-    3. Do not hardcode background, border, or state colors in C++ paintEvent.
-*/
-
-* {
-    font-family: "Microsoft YaHei", "Segoe UI", "PingFang SC", Arial;
-    font-size: 12px;
-}
+/* RibbonLib default light style.
+ * Scoped to RibbonLib widgets only. It must never alter host application widgets.
+ */
 
 QRibbonWidget#RibbonWidget {
     background: #ffffff;
     border: none;
-    color: #1f1f1f;
+    color: #202124;
 }
 
 QRibbonWidget#RibbonWidget QWidget#RibbonTopBar {
-    background: #f3f3f3;
-    border-top: 1px solid #dadde1;
-    border-bottom: none;
+    background: #f3f4f6;
+    border: none;
 }
 
-/* Application button: Office 2013 style */
 QRibbonWidget#RibbonWidget QToolButton#ApplicationButton {
-    min-height: 29px;
-    max-height: 29px;
-    padding: 0px 11px;
-    margin: 0px;
+    padding: 0 12px;
+    margin: 0;
     border: none;
-    border-right: 1px solid #0e5d9f;
-    border-radius: 0px;
+    border-radius: 0;
     background: #0072c6;
     color: #ffffff;
 }
 QRibbonWidget#RibbonWidget QToolButton#ApplicationButton:hover {
     background: #106ebe;
-    border-right-color: #0d5a9c;
 }
 QRibbonWidget#RibbonWidget QToolButton#ApplicationButton:pressed,
 QRibbonWidget#RibbonWidget QToolButton#ApplicationButton:checked {
     background: #005a9e;
-    border-right-color: #004f8a;
 }
 QRibbonWidget#RibbonWidget QToolButton#ApplicationButton::menu-indicator {
     image: none;
-    height: 0px;
+    width: 0;
 }
 
-/* Tab bar */
 QRibbonWidget#RibbonWidget QTabBar#RibbonTabBar {
     background: transparent;
     border: none;
-    margin: 0px;
-    padding: 0px;
+    margin: 0;
+    padding: 0;
 }
 QRibbonWidget#RibbonWidget QTabBar#RibbonTabBar::tab {
-    height: 28px;
-    min-height: 28px;
-    padding: 0px 15px;
-    margin: 1px 0px 0px 0px;
+    min-height: 27px;
+    padding: 0 15px;
+    margin: 1px 0 0 0;
     border: none;
     border-top: 1px solid transparent;
-    border-left: 1px solid transparent;
-    border-right: 1px solid #e2e5e9;
-    border-bottom: none;
-    border-radius: 0px;
-    background: #f3f3f3;
-    color: #1f1f1f;
-}
-QRibbonWidget#RibbonWidget QTabBar#RibbonTabBar::tab:first {
-    border-left: 1px solid transparent;
+    background: #f3f4f6;
+    color: #30343a;
 }
 QRibbonWidget#RibbonWidget QTabBar#RibbonTabBar::tab:hover:!selected {
-    background: #ffffff;
-    border-top-color: #c8ccd2;
-    border-left-color: #d8dde3;
-    border-right-color: #c8ccd2;
-    color: #0072c6;
+    background: #e9edf2;
+    color: #005fb8;
 }
 QRibbonWidget#RibbonWidget QTabBar#RibbonTabBar::tab:selected {
-    height: 29px;
-    min-height: 29px;
-    margin-top: 0px;
+    min-height: 27px;
+    margin-top: 0;
     background: #ffffff;
+    border: none;
     border-top: 2px solid #0072c6;
-    border-left: 1px solid #c8ccd2;
-    border-right: 1px solid #c8ccd2;
-    border-bottom: none;
-    color: #0072c6;
+    color: #005fb8;
 }
-QRibbonWidget#RibbonWidget QTabBar#RibbonTabBar::tab:selected:first {
-    border-left: 1px solid #c8ccd2;
-}
-QRibbonWidget#RibbonWidget QTabBar#RibbonTabBar::scroller {
+QRibbonWidget#RibbonWidget QTabBar#RibbonTabBar::tab:disabled {
+    background: transparent;
+    color: #8a8f96;
 }
 QRibbonWidget#RibbonWidget QTabBar#RibbonTabBar QToolButton {
-    min-height: 16px;
-    max-height: 16px;
-    margin: 0px 2px;
-    border: 1px solid transparent;
-    background: transparent;
-}
-QRibbonWidget#RibbonWidget QTabBar#RibbonTabBar QToolButton:hover {
-    background: #eef5ff;
-    border-color: #b7d4f6;
-}
-
-/* Quick Access Bar */
-QRibbonWidget#RibbonWidget QWidget#RibbonAccessBar {
-    background: transparent;
-    border: none;
-}
-QRibbonWidget#RibbonWidget QWidget#RibbonAccessBar QToolButton {
-    min-height: 20px;
-    max-height: 20px;
-    padding: 1px;
-    margin: 0px;
+    min-width: 18px;
+    max-width: 18px;
+    min-height: 18px;
+    max-height: 18px;
+    margin: 0 1px;
+    padding: 0;
     border: 1px solid transparent;
     border-radius: 2px;
     background: transparent;
 }
-QRibbonWidget#RibbonWidget QWidget#RibbonAccessBar QToolButton:hover {
-    background: #e8f2ff;
-    border-color: #b7d4f6;
+QRibbonWidget#RibbonWidget QTabBar#RibbonTabBar QToolButton:hover {
+    background: #e3eefb;
+    border-color: #a9c9ec;
 }
-QRibbonWidget#RibbonWidget QWidget#RibbonAccessBar QToolButton:pressed {
-    background: #cfe4fb;
-    border-color: #8bbbe8;
+QRibbonWidget#RibbonWidget QTabBar#RibbonTabBar QToolButton:pressed {
+    background: #cfe3f8;
+    border-color: #87b4e1;
 }
-QRibbonWidget#RibbonWidget QWidget#RibbonAccessBar QToolButton:disabled {
+
+QRibbonWidget#RibbonWidget QWidget#RibbonAccessBar {
+    background: transparent;
+    border: none;
+    color: #30343a;
+}
+QRibbonWidget#RibbonWidget QToolButton#RibbonAccessButton {
+    padding: 0 5px;
+    margin: 0 1px;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    background: transparent;
+    color: #30343a;
+}
+QRibbonWidget#RibbonWidget QToolButton#RibbonAccessButton:hover {
+    background: #e3eefb;
+    border-color: #a9c9ec;
+    color: #174a7e;
+}
+QRibbonWidget#RibbonWidget QToolButton#RibbonAccessButton:pressed,
+QRibbonWidget#RibbonWidget QToolButton#RibbonAccessButton:checked {
+    background: #cfe3f8;
+    border-color: #87b4e1;
+    color: #123d68;
+}
+QRibbonWidget#RibbonWidget QToolButton#RibbonAccessButton:disabled {
     background: transparent;
     border-color: transparent;
+    color: #8a8f96;
 }
 
-/* Ribbon content area */
 QRibbonWidget#RibbonWidget QStackedWidget#RibbonContent {
     background: #ffffff;
-    border-top: 1px solid #cfd3d8;
-    border-left: none;
-    border-right: none;
-    border-bottom: 1px solid #c8ccd2;
-    margin: 0px;
-    padding: 0px;
+    border: none;
+    border-bottom: 1px solid #dfe3e8;
 }
-QRibbonWidget#RibbonWidget QStackedWidget#RibbonContent QWidget,
+QRibbonWidget#RibbonWidget QWidget#RibbonTabPage,
 QRibbonWidget#RibbonWidget QWidget#RibbonTabContent,
-QRibbonWidget#RibbonWidget QWidget#RibbonGroupContent {
-    background: #ffffff;
-}
-QRibbonWidget#RibbonWidget QStackedWidget#RibbonContent QScrollArea,
-QRibbonWidget#RibbonWidget QStackedWidget#RibbonContent QScrollArea QWidget#qt_scrollarea_viewport {
+QRibbonWidget#RibbonWidget QWidget#RibbonGroupContent,
+QRibbonWidget#RibbonWidget QScrollArea#RibbonTabScrollArea,
+QRibbonWidget#RibbonWidget QScrollArea#RibbonTabScrollArea QWidget#qt_scrollarea_viewport {
     background: #ffffff;
     border: none;
-}
-QRibbonWidget#RibbonWidget QScrollBar:horizontal {
-    height: 8px;
-    background: #f1f3f5;
-    margin: 0px;
-}
-QRibbonWidget#RibbonWidget QScrollBar::handle:horizontal {
-    background: #c9d2dc;
-    border-radius: 3px;
-}
-QRibbonWidget#RibbonWidget QScrollBar::handle:horizontal:hover {
-    background: #aeb9c6;
-}
-QRibbonWidget#RibbonWidget QScrollBar::add-line:horizontal,
-QRibbonWidget#RibbonWidget QScrollBar::sub-line:horizontal {
-    border: none;
-    background: transparent;
 }
 
-/* Group panel */
 QRibbonWidget#RibbonWidget QFrame#RibbonGroup {
     background: #ffffff;
     border: none;
-    border-right: 1px solid #e3e6ea;
-    margin: 0px;
-    padding: 0px;
 }
 QRibbonWidget#RibbonWidget QLabel#RibbonGroupTitle {
     min-height: 18px;
     max-height: 18px;
-    padding: 0px 4px 2px 4px;
-    margin: 0px;
+    padding: 0 4px 2px 4px;
     border: none;
     background: #ffffff;
-    color: #4a4a4a;
+    color: #5f6368;
     qproperty-alignment: AlignCenter;
 }
 QRibbonWidget#RibbonWidget QFrame#RibbonGroupSeparator {
-    color: #d8dde3;
-    background: #d8dde3;
+    color: #e5e8ec;
+    background: #e5e8ec;
     border: none;
 }
 
-/* Buttons and split buttons */
 QRibbonWidget#RibbonWidget QWidget#RibbonButton,
 QRibbonWidget#RibbonWidget QWidget#RibbonSplitButton {
     background: transparent;
     border: 1px solid transparent;
     border-radius: 2px;
-    color: #1f1f1f;
+    color: #202124;
 }
-QRibbonWidget#RibbonWidget QWidget#RibbonButton[hovered="true"],
-QRibbonWidget#RibbonWidget QWidget#RibbonSplitButton[hovered="true"] {
+QRibbonWidget#RibbonWidget QWidget#RibbonButton:hover,
+QRibbonWidget#RibbonWidget QWidget#RibbonSplitButton:hover {
     background: #eef6ff;
     border-color: #b7d4f6;
 }
@@ -220,154 +168,66 @@ QRibbonWidget#RibbonWidget QWidget#RibbonButton[checked="true"],
 QRibbonWidget#RibbonWidget QWidget#RibbonSplitButton[checked="true"] {
     background: #dbeeff;
     border-color: #6aa9df;
+    color: #123d68;
 }
 QRibbonWidget#RibbonWidget QWidget#RibbonButton:disabled,
 QRibbonWidget#RibbonWidget QWidget#RibbonSplitButton:disabled {
-    color: #8b8b8b;
+    color: #8a8f96;
     background: transparent;
     border-color: transparent;
 }
 
-/* Menus */
+QRibbonWidget#RibbonWidget QScrollBar:horizontal,
+QRibbonTab QScrollBar:horizontal,
+QWidget#RibbonTabPage QScrollBar:horizontal {
+    height: 0;
+    margin: 0;
+    border: none;
+    background: transparent;
+}
+
+QMenu#RibbonMenu,
 QMenu#RibbonSplitMenu,
-QMenu#RibbonApplicationMenu,
-QMenu {
+QMenu#RibbonApplicationMenu {
     background: #ffffff;
-    color: #1f1f1f;
+    color: #202124;
     border: 1px solid #c8ccd2;
     padding: 1px;
 }
-
+QMenu#RibbonMenu::item,
 QMenu#RibbonSplitMenu::item,
-QMenu::item {
+QMenu#RibbonApplicationMenu::item {
     min-height: 20px;
     padding: 2px 10px 2px 18px;
     background: transparent;
     border: 1px solid transparent;
-    border-radius: 1px;
 }
-
 QMenu#RibbonApplicationMenu::item {
     min-height: 22px;
     padding: 3px 10px 3px 18px;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 1px;
 }
-
+QMenu#RibbonMenu::item:selected,
 QMenu#RibbonSplitMenu::item:selected,
-QMenu#RibbonApplicationMenu::item:selected,
-QMenu::item:selected {
+QMenu#RibbonApplicationMenu::item:selected {
     background: #e8f2ff;
     border-color: #b7d4f6;
-    color: #1f1f1f;
+    color: #202124;
 }
-
+QMenu#RibbonMenu::item:disabled,
 QMenu#RibbonSplitMenu::item:disabled,
-QMenu#RibbonApplicationMenu::item:disabled,
-QMenu::item:disabled {
-    color: #8b8b8b;
+QMenu#RibbonApplicationMenu::item:disabled {
+    color: #8a8f96;
 }
-
+QMenu#RibbonMenu::separator,
 QMenu#RibbonSplitMenu::separator,
-QMenu::separator {
+QMenu#RibbonApplicationMenu::separator {
     height: 1px;
     background: #d8dde3;
     margin: 2px 4px;
 }
-
-QMenu#RibbonApplicationMenu::separator {
-    height: 1px;
-    background: #d8dde3;
-    margin: 3px 4px;
-}
-
-QMenu::indicator {
+QMenu#RibbonMenu::indicator,
+QMenu#RibbonSplitMenu::indicator,
+QMenu#RibbonApplicationMenu::indicator {
     width: 12px;
     height: 12px;
-}
-
-QMenu::icon {
-    padding-left: 0px;
-    padding-right: 0px;
-    margin-left: 0px;
-    margin-right: 0px;
-}
-
-QMenu#RibbonSplitMenu::icon {
-    padding-left: 0px;
-    padding-right: 0px;
-    margin-left: 0px;
-    margin-right: 0px;
-}
-QToolTip {
-    color: #1f1f1f;
-    background: #fffff4;
-    border: 1px solid #c8ccd2;
-    padding: 4px 6px;
-}
-
-
-
-
-/* Application menu compact layout: Office 2013 */
-QMenu#RibbonApplicationMenu {
-    background: #ffffff;
-    color: #1f1f1f;
-    border: 1px solid #c8ccd2;
-    padding: 1px;
-}
-
-QMenu#RibbonApplicationMenu::item {
-    min-height: 22px;
-    padding: 3px 8px 3px 18px;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 0px;
-}
-
-QMenu#RibbonApplicationMenu::item:selected {
-    background: #dbeeff;
-    border-color: #8bbbe8;
-    color: #1f1f1f;
-}
-
-QMenu#RibbonApplicationMenu::item:disabled {
-    color: #8b8b8b;
-}
-
-QMenu#RibbonApplicationMenu::icon {
-    padding-left: 0px;
-    padding-right: 0px;
-    margin-left: 0px;
-    margin-right: 0px;
-}
-
-QMenu#RibbonApplicationMenu::separator {
-    height: 1px;
-    background: #d8dde3;
-    margin: 2px 4px;
-}
-/* Ribbon panel supports horizontal wheel scrolling while hiding scrollbars */
-QRibbonTab QScrollBar:horizontal,
-QWidget#RibbonTabPage QScrollBar:horizontal {
-    height: 0px;
-    margin: 0px;
-    border: none;
-    background: transparent;
-}
-
-QRibbonTab QScrollBar::handle:horizontal,
-QWidget#RibbonTabPage QScrollBar::handle:horizontal {
-    height: 0px;
-    background: transparent;
-}
-
-QRibbonTab QScrollBar::add-line:horizontal,
-QRibbonTab QScrollBar::sub-line:horizontal,
-QWidget#RibbonTabPage QScrollBar::add-line:horizontal,
-QWidget#RibbonTabPage QScrollBar::sub-line:horizontal {
-    height: 0px;
-    border: none;
-    background: transparent;
 }

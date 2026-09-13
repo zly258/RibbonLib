@@ -1,5 +1,6 @@
 #include "QRibbonTab.h"
 #include "QRibbonGroup.h"
+#include "QRibbonMetrics.h"
 
 #include <QEvent>
 #include <QFrame>
@@ -11,18 +12,9 @@
 #include <QVBoxLayout>
 #include <QWheelEvent>
 
-/*
- * QRibbonTab Implementation Notes
- * ------------------------------------------------------------
- * 1. Horizontally arranges multiple QRibbonGroup panels per tab page.
- * 2. Group width is provided by its own sizeHint(); the right stretch absorbs remaining space.
- * 3. Never displays horizontal or vertical scrollbars.
- * 4. Mouse wheel events are converted into smooth horizontal scrolling when content overflows.
- * 5. Button items are typically added after addGroup(), so content width is refreshed asynchronously.
- */
-
 QRibbonTab::QRibbonTab(const QString &title, QWidget *parent)
     : QWidget(parent)
+    , m_id(title)
     , m_title(title)
 {
     setAttribute(Qt::WA_StyledBackground, true);
@@ -56,15 +48,13 @@ void QRibbonTab::setupUI()
     m_content->setObjectName("RibbonTabContent");
     m_content->setAttribute(Qt::WA_StyledBackground, true);
     m_content->setAutoFillBackground(false);
-    m_content->setFixedHeight(96);
+    m_content->setFixedHeight(QRibbonMetrics::ContentHeight);
     m_content->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
 
     m_layout = new QHBoxLayout(m_content);
     m_layout->setContentsMargins(0, 0, 0, 0);
-    m_layout->setSpacing(1);
+    m_layout->setSpacing(QRibbonMetrics::TabGroupSpacing);
     m_layout->setAlignment(Qt::AlignLeft | Qt::AlignTop);
-
-    // Right stretch absorbs remaining blank space without affecting natural content width.
     m_layout->addStretch(1);
 
     m_scrollArea->setWidget(m_content);
@@ -97,10 +87,8 @@ void QRibbonTab::updateContentWidth()
         return;
     }
 
-    if (m_layout) {
-        m_layout->invalidate();
-        m_layout->activate();
-    }
+    m_layout->invalidate();
+    m_layout->activate();
 
     int totalWidth = 0;
     const QMargins margins = m_layout->contentsMargins();
@@ -126,7 +114,7 @@ void QRibbonTab::updateContentWidth()
 
     const int finalWidth = qMax(totalWidth, viewportWidth);
     m_content->setMinimumWidth(finalWidth);
-    m_content->resize(finalWidth, 96);
+    m_content->resize(finalWidth, QRibbonMetrics::ContentHeight);
     m_content->updateGeometry();
 
     if (m_scrollArea && m_scrollArea->horizontalScrollBar()) {
@@ -137,17 +125,27 @@ void QRibbonTab::updateContentWidth()
 bool QRibbonTab::eventFilter(QObject *obj, QEvent *event)
 {
     if (m_scrollArea && obj == m_scrollArea->viewport() && event->type() == QEvent::Wheel) {
-        QWheelEvent *wheelEvent = static_cast<QWheelEvent *>(event);
         QScrollBar *hbar = m_scrollArea->horizontalScrollBar();
-
-        if (hbar && hbar->maximum() > 0) {
-            const int delta = wheelEvent->angleDelta().y() != 0
-                ? wheelEvent->angleDelta().y()
-                : wheelEvent->angleDelta().x();
-            hbar->setValue(hbar->value() - delta / 2);
+        if (!hbar || hbar->maximum() <= 0) {
+            return QWidget::eventFilter(obj, event);
         }
 
-        return true;
+        QWheelEvent *wheelEvent = static_cast<QWheelEvent *>(event);
+        int delta = wheelEvent->pixelDelta().x();
+        if (delta == 0) {
+            delta = wheelEvent->pixelDelta().y();
+        }
+        if (delta == 0) {
+            delta = wheelEvent->angleDelta().y() / 2;
+        }
+        if (delta == 0) {
+            delta = wheelEvent->angleDelta().x() / 2;
+        }
+
+        if (delta != 0) {
+            hbar->setValue(hbar->value() - delta);
+            return true;
+        }
     }
 
     return QWidget::eventFilter(obj, event);
@@ -167,12 +165,11 @@ void QRibbonTab::showEvent(QShowEvent *event)
 
 QRibbonGroup *QRibbonTab::addGroup(const QString &title)
 {
-    QRibbonGroup *group = new QRibbonGroup(title, this); // Empty groups are hidden by default and shown once content is added.
+    QRibbonGroup *group = new QRibbonGroup(title, this);
     m_groups.append(group);
 
     connect(group, &QRibbonGroup::layoutChanged, this, &QRibbonTab::scheduleContentWidthUpdate);
 
-    // Ensure the right stretch spacer always stays at the end.
     if (m_layout->count() > 0) {
         QLayoutItem *last = m_layout->itemAt(m_layout->count() - 1);
         if (last && last->spacerItem()) {

@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/RibbonLib">
+        <file>styles/ribbon.qss</file>
+    </qresource>
+</RCC>

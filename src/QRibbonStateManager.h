@@ -4,12 +4,12 @@
 #include "RibbonLibGlobal.h"
 
 #include <QObject>
-#include <QString>
+#include <QPointer>
 #include <QSettings>
+#include <QString>
 
 class QRibbonWidget;
 
-// Ribbon state manager: automatically persists and restores Ribbon state
 class RIBBONLIB_EXPORT QRibbonStateManager : public QObject
 {
     Q_OBJECT
@@ -23,8 +23,8 @@ public:
 private:
     QString key(const QString &name) const;
 
-    QRibbonWidget *m_ribbon;
-    QString m_settingsPrefix { QStringLiteral("Ribbon") };
+    QPointer<QRibbonWidget> m_ribbon;
+    QString m_settingsPrefix {QStringLiteral("Ribbon")};
     QSettings m_settings;
 };
 

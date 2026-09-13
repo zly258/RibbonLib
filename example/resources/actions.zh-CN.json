@@ -1,0 +1,35 @@
+{
+  "actions": [
+    { "id": "file.new", "name": "新建", "description": "新建文档", "icon": "qt:file", "shortcut": "Ctrl+N" },
+    { "id": "file.open", "name": "打开", "description": "打开示例文档", "icon": "qt:open", "shortcut": "Ctrl+O" },
+    { "id": "file.save", "name": "保存", "description": "保存当前文档", "icon": "icons/save.svg", "standardIcon": "save", "shortcut": "Ctrl+S" },
+    { "id": "file.close", "name": "关闭", "description": "关闭示例程序", "icon": "qt:close" },
+
+    { "id": "edit.undo", "name": "撤销", "description": "撤销上一步编辑", "icon": "qt:back", "shortcut": "Ctrl+Z" },
+    { "id": "edit.redo", "name": "重做", "description": "重做上一步编辑", "icon": "qt:forward", "shortcut": "Ctrl+Y" },
+    { "id": "edit.cut", "name": "剪切", "description": "剪切选中文本", "icon": "qt:close", "shortcut": "Ctrl+X" },
+    { "id": "edit.copy", "name": "复制", "description": "复制选中文本", "icon": "qt:file", "shortcut": "Ctrl+C" },
+    { "id": "edit.paste", "name": "粘贴", "description": "粘贴剪贴板文本", "icon": "qt:apply", "shortcut": "Ctrl+V" },
+    { "id": "edit.selectAll", "name": "全选", "description": "选择全部文本", "icon": "qt:apply", "shortcut": "Ctrl+A" },
+    { "id": "edit.find", "name": "查找 Ribbon", "description": "查找下一个 Ribbon 单词", "icon": "qt:question", "shortcut": "Ctrl+F" },
+
+    { "id": "insert.content", "name": "插入", "description": "插入常用内容", "icon": "qt:file" },
+    { "id": "insert.heading", "name": "标题", "description": "插入标题", "icon": "qt:file" },
+    { "id": "insert.list", "name": "列表", "description": "插入项目列表", "icon": "qt:list" },
+    { "id": "insert.table", "name": "表格", "description": "插入简单表格", "icon": "qt:list" },
+    { "id": "insert.link", "name": "链接", "description": "插入示例链接", "icon": "qt:forward" },
+    { "id": "insert.date", "name": "日期", "description": "插入当前日期", "icon": "qt:info" },
+
+    { "id": "view.zoomIn", "name": "放大", "description": "放大编辑区", "icon": "qt:up" },
+    { "id": "view.zoomOut", "name": "缩小", "description": "缩小编辑区", "icon": "qt:down" },
+    { "id": "view.resetZoom", "name": "重置缩放", "description": "恢复默认缩放", "icon": "qt:reset" },
+    { "id": "view.readOnly", "name": "只读", "description": "切换只读模式", "icon": "qt:info", "checkable": true },
+    { "id": "view.fullscreen", "name": "全屏", "description": "切换全屏显示", "icon": "qt:maximize", "checkable": true },
+
+    { "id": "tools.refresh", "name": "刷新", "description": "刷新示例状态", "icon": "qt:reload" },
+    { "id": "tools.settings", "name": "设置", "description": "显示示例设置", "icon": "qt:settings" },
+
+    { "id": "help.about", "name": "关于", "description": "关于 RibbonLib Example", "icon": "qt:info" },
+    { "id": "language.switch", "name": "English", "description": "Switch to English" }
+  ]
+}

@@ -1,16 +1,16 @@
 #include "QRibbonSplitButton.h"
 #include "QRibbonMetrics.h"
-#include "QRibbonMenu.h"
+#include "QRibbonStyle.h"
 
-#include <QPainter>
+#include <QAction>
+#include <QEvent>
+#include <QFontMetrics>
+#include <QMenu>
 #include <QMouseEvent>
+#include <QPainter>
 #include <QStyle>
 #include <QStyleOption>
-#include <QCursor>
-#include <QApplication>
-#include <QEvent>
 
-// Constructor / updates
 void QRibbonSplitButton::updateIconSize()
 {
     m_iconSize = (m_size == QRibbonButtonSize::Large)
@@ -20,64 +20,47 @@ void QRibbonSplitButton::updateIconSize()
 
 QIcon QRibbonSplitButton::effectiveIcon() const
 {
-    if (!m_icon.isNull()) {
-        return m_icon;
-    }
-
-    QStyle *styleObject = this->style();
-    if (!styleObject && qApp) {
-        styleObject = qApp->style();
-    }
-
-    return styleObject
-        ? styleObject->standardIcon(QStyle::SP_MessageBoxQuestion)
-        : QIcon();
+    return m_icon;
 }
 
 QRibbonSplitButton::QRibbonSplitButton(QWidget *parent)
     : QWidget(parent)
-    , m_size(QRibbonButtonSize::Large)
-    , m_checkable(false)
-    , m_checked(false)
-    , m_hovered(false)
-    , m_pressed(false)
-    , m_arrowPressed(false)
-    , m_arrowHovered(false)
-    , m_menu(nullptr)
 {
     setObjectName("RibbonSplitButton");
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
+    setAttribute(Qt::WA_Hover, true);
     setAttribute(Qt::WA_StyledBackground, true);
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     updateIconSize();
     updateStateProperties();
 }
 
-QRibbonSplitButton::QRibbonSplitButton(const QIcon &icon, const QString &text, QRibbonButtonSize size, QWidget *parent)
+QRibbonSplitButton::QRibbonSplitButton(const QIcon &icon,
+                                       const QString &text,
+                                       QRibbonButtonSize size,
+                                       QWidget *parent)
     : QWidget(parent)
     , m_size(size)
     , m_icon(icon)
     , m_text(text)
-    , m_checkable(false)
-    , m_checked(false)
-    , m_hovered(false)
-    , m_pressed(false)
-    , m_arrowPressed(false)
-    , m_arrowHovered(false)
-    , m_menu(nullptr)
 {
     setObjectName("RibbonSplitButton");
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
+    setAttribute(Qt::WA_Hover, true);
     setAttribute(Qt::WA_StyledBackground, true);
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    setAccessibleName(m_text);
     updateIconSize();
     updateStateProperties();
 }
 
 QRibbonSplitButton::~QRibbonSplitButton()
 {
+    if (m_defaultAction) {
+        disconnect(m_defaultAction, nullptr, this, nullptr);
+    }
     if (m_menu && m_menu->parent() == this) {
         delete m_menu;
     }
@@ -85,121 +68,135 @@ QRibbonSplitButton::~QRibbonSplitButton()
 
 void QRibbonSplitButton::setButtonSize(QRibbonButtonSize size)
 {
-    if (m_size != size) {
-        m_size = size;
-        updateIconSize();
-        updateGeometry();
-        update();
-    }
+    if (m_size == size) return;
+
+    m_size = size;
+    updateIconSize();
+    updateStateProperties();
+    updateGeometry();
+    update();
 }
 
 void QRibbonSplitButton::setIcon(const QIcon &icon)
 {
-    if (m_icon.cacheKey() != icon.cacheKey()) {
-        m_icon = icon;
-        updateGeometry();
-        update();
-    }
+    if (m_icon.cacheKey() == icon.cacheKey()) return;
+
+    m_icon = icon;
+    updateGeometry();
+    update();
 }
 
 void QRibbonSplitButton::setText(const QString &text)
 {
-    if (m_text != text) {
-        m_text = text;
-        updateGeometry();
-        update();
-    }
+    if (m_text == text) return;
+
+    m_text = text;
+    setAccessibleName(m_text);
+    updateGeometry();
+    update();
 }
 
 void QRibbonSplitButton::setCheckable(bool checkable)
 {
-    if (m_checkable != checkable) {
-        m_checkable = checkable;
-        update();
+    if (m_checkable == checkable) return;
+
+    m_checkable = checkable;
+    if (!m_checkable) {
+        m_checked = false;
     }
+    updateStateProperties();
+    update();
 }
 
 void QRibbonSplitButton::setChecked(bool checked)
 {
-    if (m_checkable && m_checked != checked) {
-        m_checked = checked;
-        update();
-        emit toggled(checked);
-    }
+    if (!m_checkable || m_checked == checked) return;
+
+    m_checked = checked;
     updateStateProperties();
+    update();
+    emit toggled(checked);
 }
 
 void QRibbonSplitButton::setMenu(QMenu *menu)
 {
     if (m_menu == menu) return;
-    
-    if (m_menu) {
-        m_menu->removeEventFilter(this);
-        m_menu->disconnect(this);
+
+    if (m_defaultAction) {
+        disconnect(m_defaultAction, nullptr, this, nullptr);
+        m_defaultAction = nullptr;
     }
-    
+    if (m_menu) {
+        disconnect(m_menu, nullptr, this, nullptr);
+    }
+
     m_menu = menu;
-    if (m_menu) {
-        // Uniform styles are set in resources/styles/ribbon.qss; avoid overriding here
-        // Set objectName for stylesheet selector differentiation if needed
-        if (m_menu->objectName().isEmpty()) {
-            m_menu->setObjectName(QStringLiteral("RibbonSplitMenu"));
-        }
-        m_menu->installEventFilter(this);
-        connect(m_menu, &QMenu::aboutToShow, this, [this]() {
-            m_arrowPressed = false;
-            updateStateProperties();
-            update();
-        });
-        connect(m_menu, &QMenu::triggered, this, &QRibbonSplitButton::onMenuActionTriggered);
-        // Monitor changed signal for all QActions in menu to sync button appearance when default action changes
-        for (QAction *a : m_menu->actions()) {
-            if (!a) continue;
-            connect(a, &QAction::changed, this, [this, a]() {
-                if (!m_menu) return;
-                QAction *def = m_menu->defaultAction();
-                if (def == a) {
-                    // Sync icon, text, tooltip, and enabled state of the default action
-                    setIcon(a->icon());
-                    setText(a->text());
-                    setToolTip(a->toolTip());
-                    QWidget::setEnabled(a->isEnabled());
-                    update();
-                }
-            });
-        }
-        updateMenuIconTargetSize();
+    if (!m_menu) {
+        updateGeometry();
+        update();
+        return;
     }
-    
+
+    m_menu->setObjectName(QStringLiteral("RibbonSplitMenu"));
+    QRibbonStyle::applyMenuStyle(m_menu);
+
+    connect(m_menu, &QMenu::aboutToShow, this, [this]() {
+        m_arrowPressed = false;
+        updateStateProperties();
+        update();
+    });
+    connect(m_menu, &QMenu::triggered, this, &QRibbonSplitButton::onMenuActionTriggered);
+
+    if (m_menu->defaultAction()) {
+        setDefaultAction(m_menu->defaultAction());
+    }
+
     updateGeometry();
 }
 
 void QRibbonSplitButton::setDefaultAction(QAction *action)
 {
-    if (!action || !m_menu) return;
-    
-    // Set default action for the menu
+    if (!action || !m_menu || action == m_defaultAction) {
+        if (action && action == m_defaultAction) {
+            syncFromDefaultAction();
+        }
+        return;
+    }
+
+    if (m_defaultAction) {
+        disconnect(m_defaultAction, nullptr, this, nullptr);
+    }
+
+    m_defaultAction = action;
     m_menu->setDefaultAction(action);
-    
-    // Sync button icon and text
-    setIcon(action->icon());
-    setText(action->text());
-    setToolTip(action->toolTip());
-    setEnabled(action->isEnabled());
-    
-    // Connect action change signal
-    connect(action, &QAction::changed, this, [this, action]() {
-        setIcon(action->icon());
-        setText(action->text());
-        setToolTip(action->toolTip());
-        setEnabled(action->isEnabled());
+    connect(m_defaultAction, &QAction::changed, this, [this]() {
+        syncFromDefaultAction();
     });
+
+    syncFromDefaultAction();
+}
+
+void QRibbonSplitButton::syncFromDefaultAction()
+{
+    if (!m_defaultAction) return;
+
+    m_icon = m_defaultAction->icon();
+    m_text = m_defaultAction->text();
+    setAccessibleName(m_text);
+    setToolTip(m_defaultAction->toolTip());
+    QWidget::setEnabled(m_defaultAction->isEnabled());
+    setVisible(m_defaultAction->isVisible());
+    m_checkable = m_defaultAction->isCheckable();
+    m_checked = m_checkable && m_defaultAction->isChecked();
+
+    updateStateProperties();
+    updateGeometry();
+    update();
 }
 
 QSize QRibbonSplitButton::sizeHint() const
 {
-    QFontMetrics fm(font());
-
+    const QFontMetrics fm(font());
     const int iconW = effectiveIcon().isNull() ? 0 : m_iconSize.width();
     const int iconH = effectiveIcon().isNull() ? 0 : m_iconSize.height();
     const int textW = m_text.isEmpty() ? 0 : fm.horizontalAdvance(m_text);
@@ -207,8 +204,8 @@ QSize QRibbonSplitButton::sizeHint() const
 
     if (m_size == QRibbonButtonSize::Large) {
         const int width = qMax(QRibbonMetrics::SplitButtonMinWidth,
-                               qMax(iconW, textW) + QRibbonMetrics::SplitArrowWidth
-                               + QRibbonMetrics::LargeButtonHPadding * 2);
+                               qMax(iconW, textW + QRibbonMetrics::SplitArrowWidth)
+                                   + QRibbonMetrics::LargeButtonHPadding * 2);
         const int height = qMax(QRibbonMetrics::LargeButtonMinHeight,
                                 iconH + textH + 14);
         return QSize(width, height);
@@ -219,7 +216,7 @@ QSize QRibbonSplitButton::sizeHint() const
         : 0;
     const int width = qMax(QRibbonMetrics::SplitButtonMinWidth,
                            iconW + spacing + textW + QRibbonMetrics::SplitArrowWidth
-                           + QRibbonMetrics::SmallButtonHPadding * 2);
+                               + QRibbonMetrics::SmallButtonHPadding * 2);
     const int height = qMax(QRibbonMetrics::SmallButtonMinHeight,
                             qMax(iconH, textH) + 8);
     return QSize(width, height);
@@ -252,33 +249,45 @@ void QRibbonSplitButton::paintEvent(QPaintEvent *event)
 
     const QRect textRect = getTextRect();
     if (!m_text.isEmpty() && textRect.isValid()) {
-        const QPalette::ColorGroup colorGroup = isEnabled() ? QPalette::Active : QPalette::Disabled;
-        painter.setPen(option.palette.color(colorGroup, QPalette::ButtonText));
+        const QPalette::ColorGroup group = isEnabled() ? QPalette::Active : QPalette::Disabled;
+        painter.setPen(option.palette.color(group, QPalette::WindowText));
 
-        QFontMetrics fm(font());
         QString drawText = m_text;
         const int newlineIndex = drawText.indexOf('\n');
         if (newlineIndex >= 0) {
             drawText = drawText.left(newlineIndex);
         }
 
-        const QString elidedText = fm.elidedText(drawText, Qt::ElideRight, textRect.width());
-        const int textFlags = (m_size == QRibbonButtonSize::Large)
-            ? (Qt::AlignLeft | Qt::AlignTop)
+        const QString elidedText = QFontMetrics(font()).elidedText(drawText,
+                                                                   Qt::ElideRight,
+                                                                   textRect.width());
+        const int flags = (m_size == QRibbonButtonSize::Large)
+            ? (Qt::AlignHCenter | Qt::AlignTop)
             : (Qt::AlignLeft | Qt::AlignVCenter);
-        painter.drawText(textRect, textFlags, elidedText);
+        painter.drawText(textRect, flags, elidedText);
     }
 
     if (m_menu) {
         const QRect arrowRect = getDropArrowRect();
         if (arrowRect.isValid()) {
+            if (m_arrowHovered || m_arrowPressed) {
+                QColor highlight = option.palette.color(QPalette::Highlight);
+                highlight.setAlpha(m_arrowPressed ? 48 : 26);
+                painter.fillRect(arrowRect, highlight);
+                painter.setPen(option.palette.color(QPalette::Midlight));
+                painter.drawLine(arrowRect.topLeft(), arrowRect.bottomLeft());
+            }
+
             QStyleOption arrowOption;
             arrowOption.initFrom(this);
             arrowOption.rect = QRect(arrowRect.center().x() - 4,
                                      arrowRect.center().y() - 3,
                                      8,
                                      6);
-            arrowOption.state = QStyle::State_Enabled | QStyle::State_Active;
+            arrowOption.state = QStyle::State_None;
+            if (isEnabled()) {
+                arrowOption.state |= QStyle::State_Enabled | QStyle::State_Active;
+            }
             if (m_arrowHovered) arrowOption.state |= QStyle::State_MouseOver;
             if (m_arrowPressed) arrowOption.state |= QStyle::State_Sunken;
             style()->drawPrimitive(QStyle::PE_IndicatorArrowDown, &arrowOption, &painter, this);
@@ -295,70 +304,65 @@ void QRibbonSplitButton::paintEvent(QPaintEvent *event)
 
 void QRibbonSplitButton::mousePressEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton && isEnabled()) {
-        const bool inArrow = isInArrowArea(event->pos());
-        if (inArrow) {
-            m_arrowPressed = true;
-        } else {
-            m_pressed = true;
-        }
-        updateStateProperties();
-        update();
+    if (event->button() != Qt::LeftButton || !isEnabled()) {
+        QWidget::mousePressEvent(event);
+        return;
     }
-    
+
+    if (isInArrowArea(event->pos())) {
+        m_arrowPressed = true;
+    } else {
+        m_pressed = true;
+    }
+
+    updateStateProperties();
+    update();
     event->accept();
 }
 
 void QRibbonSplitButton::mouseReleaseEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton && isEnabled()) {
-        const bool inBtn = rect().contains(event->pos());
-        const bool inArrow = isInArrowArea(event->pos());
-        
-        if (m_arrowPressed) {
-            m_arrowPressed = false;
-            updateStateProperties();
-            update();
-            
-            if (inArrow && m_menu) {
-                // Open drop-down menu
-                updateMenuIconTargetSize();
-                
-                // Large button: menu below; Small button: menu below offset right
-                QPoint menuPos;
-                if (m_size == QRibbonButtonSize::Large) {
-                    menuPos = mapToGlobal(rect().bottomLeft());
-                } else {
-                    menuPos = mapToGlobal(rect().bottomRight() - QPoint(20, 0));
-                }
-                
-                // Retain style and palette before popup
-                m_menu->popup(menuPos);
-                return;
-            }
-        } else if (m_pressed && inBtn && !inArrow) {
-            // Body click: execute default action or emit clicked
-            m_pressed = false;
-            updateStateProperties();
-            update();
-            
-            if (m_menu && m_menu->defaultAction()) {
-                m_menu->defaultAction()->trigger();
+    if (event->button() != Qt::LeftButton || !isEnabled()) {
+        QWidget::mouseReleaseEvent(event);
+        return;
+    }
+
+    const bool inside = rect().contains(event->pos());
+    const bool inArrow = isInArrowArea(event->pos());
+
+    if (m_arrowPressed) {
+        m_arrowPressed = false;
+        updateStateProperties();
+        update();
+
+        if (inside && inArrow && m_menu) {
+            m_menu->popup(mapToGlobal(QPoint(0, height())));
+            event->accept();
+            return;
+        }
+    } else if (m_pressed) {
+        m_pressed = false;
+        updateStateProperties();
+        update();
+
+        if (inside && !inArrow) {
+            if (m_defaultAction) {
+                m_defaultAction->trigger();
             } else {
                 if (m_checkable) {
                     setChecked(!m_checked);
                 }
                 emit clicked();
             }
+            event->accept();
             return;
         }
     }
-    
+
     m_pressed = false;
     m_arrowPressed = false;
     updateStateProperties();
     update();
-    
     event->accept();
 }
 
@@ -372,8 +376,9 @@ void QRibbonSplitButton::mouseMoveEvent(QMouseEvent *event)
 
 void QRibbonSplitButton::leaveEvent(QEvent *event)
 {
-    m_hovered = false;
     m_arrowHovered = false;
+    m_pressed = false;
+    m_arrowPressed = false;
     updateStateProperties();
     update();
     QWidget::leaveEvent(event);
@@ -381,13 +386,10 @@ void QRibbonSplitButton::leaveEvent(QEvent *event)
 
 void QRibbonSplitButton::changeEvent(QEvent *event)
 {
-    if (event->type() == QEvent::EnabledChange) {
-        if (!isEnabled()) {
-            m_pressed = false;
-            m_arrowPressed = false;
-            m_hovered = false;
-            m_arrowHovered = false;
-        }
+    if (event->type() == QEvent::EnabledChange && !isEnabled()) {
+        m_pressed = false;
+        m_arrowPressed = false;
+        m_arrowHovered = false;
         updateStateProperties();
         update();
     }
@@ -396,102 +398,104 @@ void QRibbonSplitButton::changeEvent(QEvent *event)
 
 QRect QRibbonSplitButton::getIconRect() const
 {
-    if (effectiveIcon().isNull()) {
-        return QRect();
-    }
+    if (effectiveIcon().isNull()) return QRect();
 
     if (m_size == QRibbonButtonSize::Large) {
-        return QRect(8, 8, m_iconSize.width(), m_iconSize.height());
+        const int x = qMax(0, (width() - m_iconSize.width()) / 2);
+        return QRect(x,
+                     QRibbonMetrics::LargeIconTop,
+                     m_iconSize.width(),
+                     m_iconSize.height());
     }
 
     const int y = (height() - m_iconSize.height()) / 2;
-    return QRect(6, y, m_iconSize.width(), m_iconSize.height());
+    return QRect(QRibbonMetrics::ButtonSidePadding,
+                 y,
+                 m_iconSize.width(),
+                 m_iconSize.height());
 }
 
 QRect QRibbonSplitButton::getTextRect() const
 {
-    if (m_text.isEmpty()) {
-        return QRect();
-    }
+    if (m_text.isEmpty()) return QRect();
 
     if (m_size == QRibbonButtonSize::Large) {
         const int right = m_menu ? QRibbonMetrics::SplitArrowWidth : 0;
-        return QRect(8, 44, qMax(0, width() - 16 - right), height() - 46);
+        return QRect(QRibbonMetrics::ButtonSidePadding,
+                     QRibbonMetrics::LargeTextTop,
+                     qMax(0, width() - QRibbonMetrics::ButtonSidePadding * 2 - right),
+                     qMax(0, height() - QRibbonMetrics::LargeTextTop - 2));
     }
 
     const int left = effectiveIcon().isNull()
-        ? 6
-        : 6 + m_iconSize.width() + QRibbonMetrics::ButtonTextSpacing;
-    const int right = m_menu ? QRibbonMetrics::SplitArrowWidth : 6;
+        ? QRibbonMetrics::ButtonSidePadding
+        : QRibbonMetrics::ButtonSidePadding + m_iconSize.width() + QRibbonMetrics::ButtonTextSpacing;
+    const int right = m_menu ? QRibbonMetrics::SplitArrowWidth : QRibbonMetrics::ButtonSidePadding;
     return QRect(left, 0, qMax(0, width() - left - right), height());
 }
 
 QRect QRibbonSplitButton::getDropArrowRect() const
 {
-    if (!m_menu) {
-        return QRect();
-    }
+    if (!m_menu) return QRect();
 
     if (m_size == QRibbonButtonSize::Large) {
-        return QRect(width() - QRibbonMetrics::SplitArrowWidth, 0,
-                     QRibbonMetrics::SplitArrowWidth, height());
+        return QRect(width() - QRibbonMetrics::SplitArrowWidth,
+                     QRibbonMetrics::LargeTextTop - 1,
+                     QRibbonMetrics::SplitArrowWidth,
+                     qMax(0, height() - QRibbonMetrics::LargeTextTop + 1));
     }
 
-    return QRect(width() - QRibbonMetrics::SplitArrowWidth, 0,
-                 QRibbonMetrics::SplitArrowWidth, height());
+    return QRect(width() - QRibbonMetrics::SplitArrowWidth,
+                 0,
+                 QRibbonMetrics::SplitArrowWidth,
+                 height());
 }
 
 bool QRibbonSplitButton::isInArrowArea(const QPoint &pos) const
 {
-    if (!m_menu) return false;
-    return getDropArrowRect().contains(pos);
+    return m_menu && getDropArrowRect().contains(pos);
 }
 
 void QRibbonSplitButton::updateHoverState(const QPoint &pos)
 {
-    const bool oldHovered = m_hovered;
-    const bool oldArrowHovered = m_arrowHovered;
-    
-    m_hovered = rect().contains(pos);
-    m_arrowHovered = m_hovered && isInArrowArea(pos);
-    
-    if (m_hovered != oldHovered || m_arrowHovered != oldArrowHovered) {
-        updateStateProperties();
-        update();
-    }
+    const bool arrowHovered = isInArrowArea(pos);
+    if (m_arrowHovered == arrowHovered) return;
+
+    m_arrowHovered = arrowHovered;
+    update();
 }
 
 void QRibbonSplitButton::onMenuActionTriggered(QAction *action)
 {
-    if (!m_menu) return;
-    
-    // Update default action
-    m_menu->setDefaultAction(action);
-    
-    // Sync button appearance with action
-    setIcon(action->icon());
-    setText(action->text());
-    setToolTip(action->toolTip());
-    setEnabled(action->isEnabled());
-}
-
-void QRibbonSplitButton::updateMenuIconTargetSize()
-{
-    if (!m_menu) return;
-    
-    if (auto rbMenu = qobject_cast<QRibbonMenu*>(m_menu)) {
-        const QSize sz = (m_size == QRibbonButtonSize::Large) ? m_iconSize : m_iconSize;
-        rbMenu->setIconTargetSize(sz);
+    if (action) {
+        setDefaultAction(action);
     }
 }
 
 void QRibbonSplitButton::updateStateProperties()
 {
-    const bool effectivePressed = m_pressed || m_arrowPressed;
-    const bool effectiveHovered = m_hovered || m_arrowHovered;
-    if (property("hovered").toBool() != effectiveHovered) setProperty("hovered", effectiveHovered);
-    if (property("pressed").toBool() != effectivePressed) setProperty("pressed", effectivePressed);
-    if (property("checked").toBool() != m_checked) setProperty("checked", m_checked);
-    style()->unpolish(this);
-    style()->polish(this);
+    bool changed = false;
+
+    const QString sizeName = m_size == QRibbonButtonSize::Large
+        ? QStringLiteral("large")
+        : QStringLiteral("small");
+    if (property("buttonSize").toString() != sizeName) {
+        setProperty("buttonSize", sizeName);
+        changed = true;
+    }
+
+    const bool pressed = m_pressed || m_arrowPressed;
+    if (property("pressed").toBool() != pressed) {
+        setProperty("pressed", pressed);
+        changed = true;
+    }
+    if (property("checked").toBool() != m_checked) {
+        setProperty("checked", m_checked);
+        changed = true;
+    }
+
+    if (changed) {
+        style()->unpolish(this);
+        style()->polish(this);
+    }
 }

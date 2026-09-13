@@ -1,46 +1,100 @@
 #include "QRibbonHelper.h"
-#include "QRibbonWidget.h"
-#include "QRibbonTab.h"
-#include "QRibbonGroup.h"
-#include "QRibbonButton.h"
-#include "QRibbonSplitButton.h"
 #include "QApplicationButton.h"
+#include "QRibbonButton.h"
+#include "QRibbonGroup.h"
 #include "QRibbonMenu.h"
+#include "QRibbonSplitButton.h"
+#include "QRibbonTab.h"
+#include "QRibbonWidget.h"
 #include "RibbonAction.h"
 
+#include <QApplication>
+#include <QDebug>
+#include <QDir>
 #include <QFile>
-#include <QStatusBar>
+#include <QFileInfo>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonArray>
-#include <QAction>
-#include <QApplication>
-#include <QIcon>
-#include <QMenu>
 #include <QKeySequence>
-#include <QFileInfo>
-#include <QDir>
+#include <QMenu>
+#include <QSet>
+#include <QStyle>
 #include <QVariant>
-#include <QCoreApplication>
-#include <QDebug>
 
-// Helper: map string to QRibbonButtonSize
-static QRibbonButtonSize toButtonSize(const QString &s)
+static QRibbonButtonSize toButtonSize(const QString &value)
 {
-    const QString v = s.trimmed().toLower();
-    if (v == "small") return QRibbonButtonSize::Small;
-    return QRibbonButtonSize::Large;
+    return value.trimmed().compare(QStringLiteral("small"), Qt::CaseInsensitive) == 0
+        ? QRibbonButtonSize::Small
+        : QRibbonButtonSize::Large;
 }
 
-// Helper: elide string middle (forward declaration)
-[[maybe_unused]] static QString elideMiddle(const QString &text, int maxLength);
-
-// Update recent files menu items (placeholder)
-void QRibbonHelper::updateRecentFilesMenu()
+static QIcon qtStandardIcon(const QString &name)
 {
+    const QString key = name.trimmed().toLower();
+    if (key.isEmpty()) return QIcon();
+
+    static const QHash<QString, QStyle::StandardPixmap> icons {
+        {QStringLiteral("file"), QStyle::SP_FileIcon},
+        {QStringLiteral("sp_fileicon"), QStyle::SP_FileIcon},
+        {QStringLiteral("folder"), QStyle::SP_DirIcon},
+        {QStringLiteral("sp_diricon"), QStyle::SP_DirIcon},
+        {QStringLiteral("home"), QStyle::SP_DirHomeIcon},
+        {QStringLiteral("sp_dirhomeicon"), QStyle::SP_DirHomeIcon},
+        {QStringLiteral("open"), QStyle::SP_DialogOpenButton},
+        {QStringLiteral("sp_dialogopenbutton"), QStyle::SP_DialogOpenButton},
+        {QStringLiteral("save"), QStyle::SP_DialogSaveButton},
+        {QStringLiteral("sp_dialogsavebutton"), QStyle::SP_DialogSaveButton},
+        {QStringLiteral("close"), QStyle::SP_DialogCloseButton},
+        {QStringLiteral("sp_dialogclosebutton"), QStyle::SP_DialogCloseButton},
+        {QStringLiteral("apply"), QStyle::SP_DialogApplyButton},
+        {QStringLiteral("sp_dialogapplybutton"), QStyle::SP_DialogApplyButton},
+        {QStringLiteral("cancel"), QStyle::SP_DialogCancelButton},
+        {QStringLiteral("sp_dialogcancelbutton"), QStyle::SP_DialogCancelButton},
+        {QStringLiteral("reset"), QStyle::SP_DialogResetButton},
+        {QStringLiteral("sp_dialogresetbutton"), QStyle::SP_DialogResetButton},
+        {QStringLiteral("help"), QStyle::SP_DialogHelpButton},
+        {QStringLiteral("sp_dialoghelpbutton"), QStyle::SP_DialogHelpButton},
+        {QStringLiteral("info"), QStyle::SP_MessageBoxInformation},
+        {QStringLiteral("sp_messageboxinformation"), QStyle::SP_MessageBoxInformation},
+        {QStringLiteral("warning"), QStyle::SP_MessageBoxWarning},
+        {QStringLiteral("sp_messageboxwarning"), QStyle::SP_MessageBoxWarning},
+        {QStringLiteral("error"), QStyle::SP_MessageBoxCritical},
+        {QStringLiteral("sp_messageboxcritical"), QStyle::SP_MessageBoxCritical},
+        {QStringLiteral("question"), QStyle::SP_MessageBoxQuestion},
+        {QStringLiteral("sp_messageboxquestion"), QStyle::SP_MessageBoxQuestion},
+        {QStringLiteral("back"), QStyle::SP_ArrowBack},
+        {QStringLiteral("sp_arrowback"), QStyle::SP_ArrowBack},
+        {QStringLiteral("forward"), QStyle::SP_ArrowForward},
+        {QStringLiteral("sp_arrowforward"), QStyle::SP_ArrowForward},
+        {QStringLiteral("up"), QStyle::SP_ArrowUp},
+        {QStringLiteral("sp_arrowup"), QStyle::SP_ArrowUp},
+        {QStringLiteral("down"), QStyle::SP_ArrowDown},
+        {QStringLiteral("sp_arrowdown"), QStyle::SP_ArrowDown},
+        {QStringLiteral("reload"), QStyle::SP_BrowserReload},
+        {QStringLiteral("sp_browserreload"), QStyle::SP_BrowserReload},
+        {QStringLiteral("stop"), QStyle::SP_BrowserStop},
+        {QStringLiteral("sp_browserstop"), QStyle::SP_BrowserStop},
+        {QStringLiteral("play"), QStyle::SP_MediaPlay},
+        {QStringLiteral("sp_mediaplay"), QStyle::SP_MediaPlay},
+        {QStringLiteral("pause"), QStyle::SP_MediaPause},
+        {QStringLiteral("sp_mediapause"), QStyle::SP_MediaPause},
+        {QStringLiteral("trash"), QStyle::SP_TrashIcon},
+        {QStringLiteral("sp_trashicon"), QStyle::SP_TrashIcon},
+        {QStringLiteral("settings"), QStyle::SP_FileDialogDetailedView},
+        {QStringLiteral("sp_filedialogdetailedview"), QStyle::SP_FileDialogDetailedView},
+        {QStringLiteral("list"), QStyle::SP_FileDialogListView},
+        {QStringLiteral("sp_filedialoglistview"), QStyle::SP_FileDialogListView},
+        {QStringLiteral("maximize"), QStyle::SP_TitleBarMaxButton},
+        {QStringLiteral("sp_titlebarmaxbutton"), QStyle::SP_TitleBarMaxButton}
+    };
+
+    const auto it = icons.constFind(key);
+    return it == icons.constEnd() ? QIcon() : QApplication::style()->standardIcon(it.value());
 }
 
-QRibbonHelper::QRibbonHelper(QObject *parent) : QObject(parent)
+QRibbonHelper::QRibbonHelper(QObject *parent)
+    : QObject(parent)
 {
 }
 
@@ -51,27 +105,6 @@ bool QRibbonHelper::warn(const QString &message)
     return false;
 }
 
-QString QRibbonHelper::actionParams(const QString &id) const
-{
-    const auto it = m_actionParams.find(id);
-    if (it != m_actionParams.end()) {
-        return it.value();
-    }
-
-    RibbonAction *ra = ribbonAction(id);
-    return ra ? ra->defaultParams() : QString();
-}
-
-void QRibbonHelper::setActionParams(const QString &id, const QString &params)
-{
-    if (id.isEmpty()) return;
-    if (params.isEmpty()) {
-        m_actionParams.remove(id);
-    } else {
-        m_actionParams.insert(id, params);
-    }
-}
-
 QString QRibbonHelper::resolveResourcePath(const QString &path) const
 {
     if (path.isEmpty()) return QString();
@@ -80,68 +113,102 @@ QString QRibbonHelper::resolveResourcePath(const QString &path) const
         return path;
     }
 
-    if (!m_resourceBaseDir.isEmpty()) {
-        return QDir(m_resourceBaseDir).filePath(path);
-    }
-
-    return path;
+    return m_resourceBaseDir.isEmpty()
+        ? path
+        : QDir(m_resourceBaseDir).filePath(path);
 }
 
+void QRibbonHelper::syncAction(QAction *source, QAction *target)
+{
+    if (!source || !target || source == target) return;
+
+    target->setObjectName(source->objectName());
+    target->setText(source->text());
+    target->setIcon(source->icon());
+    target->setToolTip(source->toolTip());
+    target->setStatusTip(source->statusTip());
+    target->setShortcut(source->shortcut());
+    target->setEnabled(source->isEnabled());
+    target->setVisible(source->isVisible());
+    target->setCheckable(source->isCheckable());
+    target->setChecked(source->isCheckable() && source->isChecked());
+}
+
+void QRibbonHelper::triggerAction(const QString &id, const QString &params, bool checked)
+{
+    RibbonAction *ribbon = ribbonAction(id);
+    if (ribbon) {
+        if (ribbon->isCheckable() && ribbon->isChecked() != checked) {
+            ribbon->setChecked(checked);
+        }
+        ribbon->trigger(params);
+    }
+
+    emit actionTriggered(id);
+}
 
 QAction *QRibbonHelper::ensureQAction(const QString &id)
 {
     if (id.isEmpty()) return nullptr;
 
-    QAction *act = m_actions.value(id, nullptr);
-    if (act) return act;
+    if (QAction *existing = m_actions.value(id, nullptr)) {
+        return existing;
+    }
 
-    act = new QAction(this);
-    act->setObjectName(id);
-    act->setText(id);
+    auto *action = new QAction(this);
+    action->setObjectName(id);
+    action->setText(id);
 
-    QObject::connect(act, &QAction::triggered, this, [this, id, act]() {
-        RibbonAction *ra = ribbonAction(id);
-        const QString params = actionParams(id);
-
-        if (ra) {
-            if (ra->isCheckable() && ra->isChecked() != act->isChecked()) {
-                ra->setChecked(act->isChecked());
-            }
-            ra->trigger(params);
-        }
-
-        // Retain unified action id signal for applications not using custom RibbonActions.
-        emit actionTriggered(id);
+    connect(action, &QAction::triggered, this, [this, id](bool checked) {
+        triggerAction(id, QString(), checked);
     });
 
-    m_actions.insert(id, act);
-    return act;
+    m_actions.insert(id, action);
+    return action;
+}
+
+QAction *QRibbonHelper::createBoundAction(const QString &id, const QString &params)
+{
+    QAction *source = m_actions.value(id, nullptr);
+    if (!source) return nullptr;
+
+    if (params.isEmpty()) {
+        return source;
+    }
+
+    auto *bound = new QAction(this);
+    m_boundActions.append(bound);
+    syncAction(source, bound);
+
+    connect(source, &QAction::changed, bound, [this, source, bound]() {
+        syncAction(source, bound);
+    });
+
+    connect(bound, &QAction::toggled, source, [source](bool checked) {
+        if (source->isCheckable() && source->isChecked() != checked) {
+            source->setChecked(checked);
+        }
+    });
+
+    connect(bound, &QAction::triggered, this, [this, id, params](bool checked) {
+        triggerAction(id, params, checked);
+    });
+
+    return bound;
 }
 
 void QRibbonHelper::syncQActionFromRibbonAction(RibbonAction *ribbonAction, QAction *qAction)
 {
     if (!ribbonAction || !qAction) return;
 
-    const QString title = ribbonAction->name().isEmpty() ? ribbonAction->id() : ribbonAction->name();
-    qAction->setText(title);
+    qAction->setText(ribbonAction->name().isEmpty() ? ribbonAction->id() : ribbonAction->name());
     qAction->setToolTip(ribbonAction->description());
-
-    if (!ribbonAction->icon().isNull()) {
-        qAction->setIcon(ribbonAction->icon());
-    }
-
-    if (!ribbonAction->shortcut().isEmpty()) {
-        qAction->setShortcut(ribbonAction->shortcut());
-    }
-
+    qAction->setIcon(ribbonAction->icon());
+    qAction->setShortcut(ribbonAction->shortcut());
     qAction->setEnabled(ribbonAction->isEnabled());
     qAction->setVisible(ribbonAction->isVisible());
     qAction->setCheckable(ribbonAction->isCheckable());
-    if (ribbonAction->isCheckable()) {
-        const bool oldBlocked = qAction->blockSignals(true);
-        qAction->setChecked(ribbonAction->isChecked());
-        qAction->blockSignals(oldBlocked);
-    }
+    qAction->setChecked(ribbonAction->isCheckable() && ribbonAction->isChecked());
 }
 
 void QRibbonHelper::bindRibbonAction(RibbonAction *ribbonAction, QAction *qAction)
@@ -150,13 +217,13 @@ void QRibbonHelper::bindRibbonAction(RibbonAction *ribbonAction, QAction *qActio
 
     syncQActionFromRibbonAction(ribbonAction, qAction);
 
-    QObject::disconnect(ribbonAction, nullptr, qAction, nullptr);
-    QObject::connect(ribbonAction, &RibbonAction::changed, qAction, [this, ribbonAction, qAction]() {
+    disconnect(ribbonAction, nullptr, qAction, nullptr);
+    connect(ribbonAction, &RibbonAction::changed, qAction, [this, ribbonAction, qAction]() {
         syncQActionFromRibbonAction(ribbonAction, qAction);
     });
 
-    QObject::disconnect(qAction, nullptr, ribbonAction, nullptr);
-    QObject::connect(qAction, &QAction::toggled, ribbonAction, [ribbonAction](bool checked) {
+    disconnect(qAction, nullptr, ribbonAction, nullptr);
+    connect(qAction, &QAction::toggled, ribbonAction, [ribbonAction](bool checked) {
         if (ribbonAction->isCheckable() && ribbonAction->isChecked() != checked) {
             ribbonAction->setChecked(checked);
         }
@@ -165,14 +232,11 @@ void QRibbonHelper::bindRibbonAction(RibbonAction *ribbonAction, QAction *qActio
 
 void QRibbonHelper::registerRibbonAction(RibbonAction *action)
 {
-    if (!action) return;
+    if (!action || action->id().isEmpty()) return;
 
-    const QString id = action->id();
-    if (id.isEmpty()) return;
-
-    QAction *act = ensureQAction(id);
-    m_ribbonActions.insert(id, action);
-    bindRibbonAction(action, act);
+    QAction *qAction = ensureQAction(action->id());
+    m_ribbonActions.insert(action->id(), action);
+    bindRibbonAction(action, qAction);
 }
 
 void QRibbonHelper::unregisterRibbonAction(const QString &id)
@@ -187,71 +251,70 @@ void QRibbonHelper::clearRibbonActions()
 
 void QRibbonHelper::clearActions()
 {
+    qDeleteAll(m_boundActions);
+    m_boundActions.clear();
+
     qDeleteAll(m_actions);
     m_actions.clear();
-    m_actionParams.clear();
 }
 
 void QRibbonHelper::bindQActionToButton(QAction *action, QRibbonButton *button)
 {
     if (!action || !button) return;
 
-    button->setEnabled(action->isEnabled());
-    button->setVisible(action->isVisible());
-    button->setText(action->text());
-    button->setIcon(action->icon());
-    button->setToolTip(action->toolTip());
-
-    QObject::connect(button, &QRibbonButton::clicked, action, &QAction::trigger);
-
-    QObject::connect(action, &QAction::changed, button, [button, action]() {
+    auto sync = [action, button]() {
         button->setEnabled(action->isEnabled());
         button->setVisible(action->isVisible());
         button->setText(action->text());
         button->setIcon(action->icon());
         button->setToolTip(action->toolTip());
-    });
+        button->setShortcut(action->shortcut());
+        button->setCheckable(action->isCheckable());
+        if (action->isCheckable()) {
+            button->setChecked(action->isChecked());
+        }
+    };
+
+    sync();
+    connect(button, &QRibbonButton::clicked, action, &QAction::trigger);
+    connect(action, &QAction::changed, button, sync);
 }
 
 void QRibbonHelper::bindQActionToSplitButton(QAction *action, QRibbonSplitButton *button)
 {
     if (!action || !button) return;
 
-    button->setEnabled(action->isEnabled());
-    button->setVisible(action->isVisible());
-    button->setText(action->text());
-    button->setIcon(action->icon());
-    button->setToolTip(action->toolTip());
-
-    QObject::connect(button, &QRibbonSplitButton::clicked, action, &QAction::trigger);
-
-    QObject::connect(action, &QAction::changed, button, [button, action]() {
+    auto sync = [action, button]() {
         button->setEnabled(action->isEnabled());
         button->setVisible(action->isVisible());
         button->setText(action->text());
         button->setIcon(action->icon());
         button->setToolTip(action->toolTip());
-    });
+        button->setCheckable(action->isCheckable());
+        if (action->isCheckable()) {
+            button->setChecked(action->isChecked());
+        }
+    };
+
+    sync();
+    connect(button, &QRibbonSplitButton::clicked, action, &QAction::trigger);
+    connect(action, &QAction::changed, button, sync);
 }
 
 RibbonAction *QRibbonHelper::ribbonAction(const QString &id) const
 {
-    const auto it = m_ribbonActions.find(id);
-    if (it == m_ribbonActions.end()) return nullptr;
-    return it.value().data();
+    const auto it = m_ribbonActions.constFind(id);
+    return it == m_ribbonActions.constEnd() ? nullptr : it.value().data();
 }
 
 void QRibbonHelper::rebuildRibbonActionBindings()
 {
     for (auto it = m_ribbonActions.begin(); it != m_ribbonActions.end(); ++it) {
-        RibbonAction *ra = it.value().data();
-        if (!ra) continue;
-
-        QAction *act = ensureQAction(ra->id());
-        bindRibbonAction(ra, act);
+        RibbonAction *ribbon = it.value().data();
+        if (!ribbon) continue;
+        bindRibbonAction(ribbon, ensureQAction(ribbon->id()));
     }
 }
-
 
 bool QRibbonHelper::loadFromResources(const QString &ribbonRes, const QString &actionsRes)
 {
@@ -260,323 +323,332 @@ bool QRibbonHelper::loadFromResources(const QString &ribbonRes, const QString &a
     clearActions();
 
     const QFileInfo actionsInfo(actionsRes);
-    if (!actionsRes.startsWith(QStringLiteral(":/")) && actionsInfo.exists()) {
-        m_resourceBaseDir = actionsInfo.absolutePath();
+    if (actionsInfo.exists()) {
+        m_resourceBaseDir = actionsRes.startsWith(QStringLiteral(":/"))
+            ? actionsInfo.path()
+            : actionsInfo.absolutePath();
     } else {
         m_resourceBaseDir.clear();
     }
 
-    // Load actions.json
-    {
-        QFile f(actionsRes);
-        if (!f.open(QIODevice::ReadOnly)) {
-            return warn(QString("Failed to open actions.json: %1").arg(actionsRes));
-        }
-        const QByteArray bytes = f.readAll();
-        if (!parseActionsJson(bytes)) return false;
-        rebuildRibbonActionBindings();
+    QFile actionsFile(actionsRes);
+    if (!actionsFile.open(QIODevice::ReadOnly)) {
+        return warn(QStringLiteral("Failed to open actions.json: %1").arg(actionsRes));
     }
+    if (!parseActionsJson(actionsFile.readAll())) {
+        return false;
+    }
+    rebuildRibbonActionBindings();
 
-    // Load ribbon.json
-    {
-        QFile f(ribbonRes);
-        if (!f.open(QIODevice::ReadOnly)) {
-            return warn(QString("Failed to open ribbon.json: %1").arg(ribbonRes));
-        }
-        const QByteArray bytes = f.readAll();
-        if (!parseRibbonJson(bytes)) return false;
+    QFile ribbonFile(ribbonRes);
+    if (!ribbonFile.open(QIODevice::ReadOnly)) {
+        return warn(QStringLiteral("Failed to open ribbon.json: %1").arg(ribbonRes));
     }
-    return true;
+    return parseRibbonJson(ribbonFile.readAll());
 }
 
 bool QRibbonHelper::parseActionsJson(const QByteArray &bytes)
 {
-    QJsonParseError err{};
-    QJsonDocument doc = QJsonDocument::fromJson(bytes, &err);
-    if (err.error != QJsonParseError::NoError || !doc.isObject()) {
-        return warn(QString("Failed to parse actions.json: %1").arg(err.errorString()));
+    QJsonParseError error{};
+    const QJsonDocument document = QJsonDocument::fromJson(bytes, &error);
+    if (error.error != QJsonParseError::NoError || !document.isObject()) {
+        return warn(QStringLiteral("Failed to parse actions.json: %1").arg(error.errorString()));
     }
-    const QJsonObject root = doc.object();
-    const QJsonArray arr = root.value("actions").toArray();
 
-    for (const QJsonValue &v : arr) {
-        const QJsonObject o = v.toObject();
-        const QString id = o.value("id").toString();
+    const QJsonArray actions = document.object().value(QStringLiteral("actions")).toArray();
+    for (const QJsonValue &value : actions) {
+        const QJsonObject object = value.toObject();
+        const QString id = object.value(QStringLiteral("id")).toString();
         if (id.isEmpty()) continue;
-        QAction *act = ensureQAction(id);
-        if (act->property("fromJson").toBool()) {
+
+        QAction *action = ensureQAction(id);
+        if (action->property("fromJson").toBool()) {
             qWarning() << "[RibbonLib] actions.json contains duplicate id:" << id;
         }
-        act->setProperty("fromJson", true);
-        act->setText(o.value("name").toString(id));
-        act->setToolTip(o.value("description").toString());
-        const QString iconPath = resolveResourcePath(o.value("icon").toString());
-        if (!iconPath.isEmpty()) {
-            if (!iconPath.startsWith(QStringLiteral(":/")) && !QFileInfo::exists(iconPath)) {
-                qWarning() << "[RibbonLib] icon file does not exist:" << iconPath;
-            }
-            act->setIcon(QIcon(iconPath));
+        action->setProperty("fromJson", true);
+        action->setText(object.value(QStringLiteral("name")).toString(id));
+        action->setToolTip(object.value(QStringLiteral("description")).toString());
+
+        QString iconSpec = object.value(QStringLiteral("icon")).toString().trimmed();
+        QString standardIconName = object.value(QStringLiteral("standardIcon")).toString().trimmed();
+        if (iconSpec.startsWith(QStringLiteral("qt:"), Qt::CaseInsensitive)) {
+            standardIconName = iconSpec.mid(3);
+            iconSpec.clear();
         }
-        const QString sc = o.value("shortcut").toString();
-        if (!sc.isEmpty()) act->setShortcut(QKeySequence(sc));
-        if (o.contains("enabled")) act->setEnabled(o.value("enabled").toBool(true));
-        if (o.contains("visible")) act->setVisible(o.value("visible").toBool(true));
-        if (o.contains("checkable")) act->setCheckable(o.value("checkable").toBool(false));
-        if (o.contains("checked")) act->setChecked(o.value("checked").toBool(false));
+
+        QIcon icon;
+        bool customIconMissing = false;
+        if (!iconSpec.isEmpty()) {
+            const QString iconPath = resolveResourcePath(iconSpec);
+            if (QFile::exists(iconPath)) {
+                icon = QIcon(iconPath);
+            } else {
+                customIconMissing = true;
+            }
+        }
+
+        if (icon.isNull() && !standardIconName.isEmpty()) {
+            icon = qtStandardIcon(standardIconName);
+        }
+
+        if (!icon.isNull()) {
+            action->setIcon(icon);
+        } else if (customIconMissing) {
+            qWarning() << "[RibbonLib] icon file does not exist and no valid fallback is available:"
+                       << iconSpec;
+        } else if (!standardIconName.isEmpty()) {
+            qWarning() << "[RibbonLib] unknown Qt standard icon:" << standardIconName;
+        }
+
+        const QString shortcut = object.value(QStringLiteral("shortcut")).toString();
+        if (!shortcut.isEmpty()) {
+            action->setShortcut(QKeySequence(shortcut));
+        }
+
+        if (object.contains(QStringLiteral("enabled"))) {
+            action->setEnabled(object.value(QStringLiteral("enabled")).toBool(true));
+        }
+        if (object.contains(QStringLiteral("visible"))) {
+            action->setVisible(object.value(QStringLiteral("visible")).toBool(true));
+        }
+        if (object.contains(QStringLiteral("checkable"))) {
+            action->setCheckable(object.value(QStringLiteral("checkable")).toBool(false));
+        }
+        if (object.contains(QStringLiteral("checked"))) {
+            action->setChecked(object.value(QStringLiteral("checked")).toBool(false));
+        }
     }
+
     return true;
 }
 
 bool QRibbonHelper::parseRibbonJson(const QByteArray &bytes)
 {
-    QJsonParseError err{};
-    QJsonDocument doc = QJsonDocument::fromJson(bytes, &err);
-    if (err.error != QJsonParseError::NoError || !doc.isObject()) {
-        return warn(QString("Failed to parse ribbon.json: %1").arg(err.errorString()));
+    QJsonParseError error{};
+    const QJsonDocument document = QJsonDocument::fromJson(bytes, &error);
+    if (error.error != QJsonParseError::NoError || !document.isObject()) {
+        return warn(QStringLiteral("Failed to parse ribbon.json: %1").arg(error.errorString()));
     }
-    const QJsonObject root = doc.object();
-    const QJsonObject rib = root.value("ribbon").toObject();
-    if (rib.isEmpty()) {
-        return warn(QString("ribbon.json is missing ribbon node"));
+
+    const QJsonObject ribbon = document.object().value(QStringLiteral("ribbon")).toObject();
+    if (ribbon.isEmpty()) {
+        return warn(QStringLiteral("ribbon.json is missing ribbon node"));
     }
-    m_ribbonRoot = rib.toVariantMap();
+
+    m_ribbonRoot = ribbon.toVariantMap();
     return true;
 }
 
 bool QRibbonHelper::buildApplicationButton(QRibbonWidget *ribbonWidget)
 {
-    const QVariantMap appBtn = m_ribbonRoot.value("applicationButton").toMap();
-    if (appBtn.isEmpty()) return true; // Optional
+    const QVariantMap definition = m_ribbonRoot.value(QStringLiteral("applicationButton")).toMap();
+    if (definition.isEmpty()) return true;
 
-    QApplicationButton *btn = new QApplicationButton(ribbonWidget);
-    const QString title = appBtn.value("title").toString();
-    if (!title.isEmpty()) btn->setText(title);
+    auto *button = new QApplicationButton(ribbonWidget);
+    const QString title = definition.value(QStringLiteral("title")).toString();
+    if (!title.isEmpty()) {
+        button->setText(title);
+    }
 
-    QMenu *menu = new QMenu(btn);
-    menu->setObjectName("RibbonApplicationMenu");
-    menu->setMinimumWidth(0);
-    const QVariantList items = appBtn.value("menu").toList();
-    for (const QVariant &it : items) {
-        if (it.toString() == "-") {
+    auto *menu = new QMenu(button);
+    menu->setObjectName(QStringLiteral("RibbonApplicationMenu"));
+
+    const QVariantList items = definition.value(QStringLiteral("menu")).toList();
+    for (const QVariant &item : items) {
+        if (item.toString() == QStringLiteral("-")) {
             menu->addSeparator();
             continue;
         }
-        const QVariantMap m = it.toMap();
-        const QString id = m.value("id").toString();
+
+        const QVariantMap entry = item.toMap();
+        const QString id = entry.value(QStringLiteral("id")).toString();
         if (id.isEmpty()) continue;
-        QAction *act = m_actions.value(id, nullptr);
-        if (!act) {
+
+        QAction *action = createBoundAction(id, entry.value(QStringLiteral("params")).toString());
+        if (!action) {
             qWarning() << "[RibbonLib] applicationButton menu references non-existent action:" << id;
             continue;
         }
-        const QString params = m.value("params").toString();
-        if (!params.isEmpty()) {
-            setActionParams(id, params);
-        }
-        menu->addAction(act);
+        menu->addAction(action);
     }
-    btn->setApplicationMenu(menu);
-    ribbonWidget->setApplicationButton(btn);
+
+    button->setApplicationMenu(menu);
+    ribbonWidget->setApplicationButton(button);
     return true;
 }
 
 bool QRibbonHelper::buildTabs(QRibbonWidget *ribbonWidget)
 {
-    const QVariantList tabs = m_ribbonRoot.value("tabs").toList();
-    for (const QVariant &tv : tabs) {
-        const QVariantMap t = tv.toMap();
-        const QString tabTitle = t.value("title").toString();
-        if (tabTitle.isEmpty()) continue;
-        QRibbonTab *tab = ribbonWidget->addTab(tabTitle);
+    const QVariantList tabs = m_ribbonRoot.value(QStringLiteral("tabs")).toList();
+    for (const QVariant &tabValue : tabs) {
+        const QVariantMap tabDefinition = tabValue.toMap();
+        const QString title = tabDefinition.value(QStringLiteral("title")).toString();
+        if (title.isEmpty()) continue;
 
-        const QVariantList panels = t.value("panels").toList();
-        for (const QVariant &pv : panels) {
-            const QVariantMap p = pv.toMap();
-            const QString panelTitle = p.value("title").toString();
+        const QString tabId = tabDefinition.value(QStringLiteral("id")).toString();
+        QRibbonTab *tab = ribbonWidget->addTab(title, tabId);
+
+        const QVariantList panels = tabDefinition.value(QStringLiteral("panels")).toList();
+        for (const QVariant &panelValue : panels) {
+            const QVariantMap panelDefinition = panelValue.toMap();
+            const QString panelTitle = panelDefinition.value(QStringLiteral("title")).toString();
             if (panelTitle.isEmpty()) continue;
-            QRibbonGroup *group = tab->addGroup(panelTitle);
 
-            const QVariantList items = p.value("items").toList();
-            for (const QVariant &iv : items) {
-                const QVariantMap m = iv.toMap();
-                const QString id = m.value("id").toString();
+            QRibbonGroup *group = tab->addGroup(panelTitle);
+            const QVariantList items = panelDefinition.value(QStringLiteral("items")).toList();
+
+            for (const QVariant &itemValue : items) {
+                const QVariantMap item = itemValue.toMap();
+                const QString id = item.value(QStringLiteral("id")).toString();
                 if (id.isEmpty()) continue;
-                QAction *act = m_actions.value(id, nullptr);
-                if (!act) {
+
+                QAction *baseAction = m_actions.value(id, nullptr);
+                if (!baseAction) {
                     qWarning() << "[RibbonLib] ribbon.json references non-existent action:" << id;
                     continue;
                 }
 
-                const QString params = m.value("params").toString();
-                if (!params.isEmpty()) {
-                    setActionParams(id, params);
-                }
+                const QRibbonButtonSize size = toButtonSize(item.value(QStringLiteral("style")).toString());
+                const QVariantList menuItems = item.value(QStringLiteral("menu")).toList();
 
-                const QRibbonButtonSize size = toButtonSize(m.value("style").toString());
-                // Create button: decide whether to use split dropdown button
-                QIcon icon = act->icon();
-                QString text = act->text();
-                QRibbonButton *btn = nullptr;
-
-                // Dropdown menu support: if item defines a menu, use QRibbonSplitButton
-                const QVariantList menuItems = m.value("menu").toList();
                 if (!menuItems.isEmpty()) {
-                    // Split button widget
-                    auto sb = new QRibbonSplitButton(icon, text, size, group);
-                    // Build menu, using QRibbonMenu for icon sizing support
-                    QMenu *menu = new QRibbonMenu(group);
-                    for (const QVariant &mv : menuItems) {
-                        if (mv.toString() == "-") {
+                    auto *splitButton = new QRibbonSplitButton(baseAction->icon(), baseAction->text(), size, group);
+                    auto *menu = new QRibbonMenu(group);
+                    menu->setObjectName(QStringLiteral("RibbonSplitMenu"));
+
+                    QAction *defaultAction = nullptr;
+                    const QString defaultId = item.value(QStringLiteral("defaultId")).toString();
+
+                    for (const QVariant &menuValue : menuItems) {
+                        if (menuValue.toString() == QStringLiteral("-")) {
                             menu->addSeparator();
                             continue;
                         }
-                        const QVariantMap mm = mv.toMap();
-                        const QString mid = mm.value("id").toString();
-                        if (mid.isEmpty()) continue;
-                        QAction *mact = m_actions.value(mid, nullptr);
-                        if (!mact) {
-                            qWarning() << "[RibbonLib] menu references non-existent action:" << mid;
+
+                        const QVariantMap menuEntry = menuValue.toMap();
+                        const QString menuId = menuEntry.value(QStringLiteral("id")).toString();
+                        if (menuId.isEmpty()) continue;
+
+                        QAction *menuAction = createBoundAction(
+                            menuId,
+                            menuEntry.value(QStringLiteral("params")).toString());
+                        if (!menuAction) {
+                            qWarning() << "[RibbonLib] menu references non-existent action:" << menuId;
                             continue;
                         }
-                        const QString mparams = mm.value("params").toString();
-                        if (!mparams.isEmpty()) {
-                            setActionParams(mid, mparams);
+
+                        menu->addAction(menuAction);
+                        if (!defaultId.isEmpty() && menuId == defaultId) {
+                            defaultAction = menuAction;
                         }
-                        menu->addAction(mact);
                     }
-                    sb->setMenu(menu);
-                    // If default action is set, sync appearance; otherwise choose first valid item
-                    QAction *def = menu->defaultAction();
-                    if (!def) {
-                        const auto acts = menu->actions();
-                        for (QAction *a : acts) { if (a && a->isEnabled() && !a->isSeparator()) { def = a; break; } }
-                        if (def) menu->setDefaultAction(def);
+
+                    if (!defaultAction) {
+                        for (QAction *action : menu->actions()) {
+                            if (action && !action->isSeparator() && action->isEnabled()) {
+                                defaultAction = action;
+                                break;
+                            }
+                        }
                     }
-                    if (def) sb->setDefaultAction(def);
 
-                    // Sync QAction state and changes
-                    bindQActionToSplitButton(act, sb);
-
-                    // Add to group according to button size to keep layout order
-                    if (size == QRibbonButtonSize::Large) {
-                        group->addLargeWidget(sb);
+                    splitButton->setMenu(menu);
+                    if (defaultAction) {
+                        splitButton->setDefaultAction(defaultAction);
                     } else {
-                        group->addSmallWidget(sb);
+                        bindQActionToSplitButton(baseAction, splitButton);
                     }
-                } else {
-                    // Standard action button
-                    btn = new QRibbonButton(icon, text, size, group);
-                    bindQActionToButton(act, btn);
-                    group->addButton(btn);
+
+                    if (size == QRibbonButtonSize::Large) {
+                        group->addLargeWidget(splitButton);
+                    } else {
+                        group->addSmallWidget(splitButton);
+                    }
+                    continue;
                 }
+
+                QAction *boundAction = createBoundAction(
+                    id,
+                    item.value(QStringLiteral("params")).toString());
+                if (!boundAction) continue;
+
+                auto *button = new QRibbonButton(boundAction->icon(), boundAction->text(), size, group);
+                bindQActionToButton(boundAction, button);
+                group->addButton(button);
             }
         }
     }
+
     return true;
 }
 
-// Load AccessBar buttons from ribbon.json
-// Supports two formats:
-// 1) Legacy: "accessBar": ["new", "open", ...]
-// 2) Object: "quickAccessBar": { "items": [ {"id":"new"}, {"id":"open"} ] }
 bool QRibbonHelper::buildAccessBar(QRibbonWidget *ribbonWidget)
 {
-    // Prefer new object format
-    const QVariantMap quick = m_ribbonRoot.value("quickAccessBar").toMap();
-    QVariantList ids;
-    if (!quick.isEmpty()) {
-        const QVariantList items = quick.value("items").toList();
-        for (const QVariant &it : items) {
-            const QVariantMap m = it.toMap();
-            const QString id = m.value("id").toString();
-            if (!id.isEmpty()) ids.push_back(id);
-        }
+    QVariantList items;
+    const QVariantMap quickAccess = m_ribbonRoot.value(QStringLiteral("quickAccessBar")).toMap();
+    if (!quickAccess.isEmpty()) {
+        items = quickAccess.value(QStringLiteral("items")).toList();
     } else {
-        // Fallback to legacy format
-        const QVariantList access = m_ribbonRoot.value("accessBar").toList();
-        for (const QVariant &v : access) {
-            const QString id = v.toString();
-            if (!id.isEmpty()) ids.push_back(id);
-        }
+        items = m_ribbonRoot.value(QStringLiteral("accessBar")).toList();
     }
 
-    if (ids.isEmpty()) return true; // Optional
+    for (const QVariant &value : items) {
+        QString id;
+        QString params;
 
-    for (const QVariant &v : ids) {
-        const QString id = v.toString();
-        QAction *act = m_actions.value(id, nullptr);
-        if (!act) {
+        if (value.canConvert<QVariantMap>()) {
+            const QVariantMap entry = value.toMap();
+            id = entry.value(QStringLiteral("id")).toString();
+            params = entry.value(QStringLiteral("params")).toString();
+        } else {
+            id = value.toString();
+        }
+
+        if (id.isEmpty()) continue;
+
+        QAction *action = createBoundAction(id, params);
+        if (!action) {
             qWarning() << "[RibbonLib] accessBar references non-existent action:" << id;
             continue;
         }
-        ribbonWidget->addAccessBarAction(act);
+        ribbonWidget->addAccessBarAction(action);
     }
+
     return true;
 }
 
 bool QRibbonHelper::buildRibbon(QRibbonWidget *ribbonWidget)
 {
     m_errorString.clear();
-    if (!ribbonWidget) return warn(QString("buildRibbon failed: ribbonWidget is null"));
-    if (m_ribbonRoot.isEmpty()) return warn(QString("buildRibbon failed: ribbon.json is not loaded"));
+    if (!ribbonWidget) {
+        return warn(QStringLiteral("buildRibbon failed: ribbonWidget is null"));
+    }
+    if (m_ribbonRoot.isEmpty()) {
+        return warn(QStringLiteral("buildRibbon failed: ribbon.json is not loaded"));
+    }
 
-    // Save pointer for menu and state updates
     m_ribbonWidget = ribbonWidget;
 
-    if (!buildApplicationButton(ribbonWidget)) return false;
-    if (!buildTabs(ribbonWidget)) return false;
-    if (!buildAccessBar(ribbonWidget)) return false;
-    return true;
+    return buildApplicationButton(ribbonWidget)
+        && buildTabs(ribbonWidget)
+        && buildAccessBar(ribbonWidget);
 }
 
-// Update enabled state for all actions except application menu
 void QRibbonHelper::updateActionEnabled(bool enabled)
 {
-    // Collect application menu actions to prevent them from being disabled
-    QList<QAction*> appActions;
-    if (m_ribbonWidget && m_ribbonWidget->applicationButton() && m_ribbonWidget->applicationButton()->applicationMenu()) {
-        appActions = m_ribbonWidget->applicationButton()->applicationMenu()->actions();
+    QSet<QString> applicationActionIds;
+    if (m_ribbonWidget && m_ribbonWidget->applicationButton()
+        && m_ribbonWidget->applicationButton()->applicationMenu()) {
+        for (QAction *action : m_ribbonWidget->applicationButton()->applicationMenu()->actions()) {
+            if (action && !action->objectName().isEmpty()) {
+                applicationActionIds.insert(action->objectName());
+            }
+        }
     }
 
     for (auto it = m_actions.begin(); it != m_actions.end(); ++it) {
-        QAction *act = it.value();
-        if (!appActions.contains(act)) {
-            act->setEnabled(enabled);
+        if (!applicationActionIds.contains(it.key()) && it.value()) {
+            it.value()->setEnabled(enabled);
         }
     }
-
-    // Traverse Ribbon widget tree to update button enabled states
-    if (m_ribbonWidget) {
-        const auto splitButtons = m_ribbonWidget->findChildren<QRibbonSplitButton*>();
-        for (QRibbonSplitButton *sb : splitButtons) {
-            if (!sb) continue;
-            sb->setEnabled(enabled);
-            // Also update menu actions
-            if (sb->menu()) {
-                for (QAction *ma : sb->menu()->actions()) {
-                    if (ma && !appActions.contains(ma)) {
-                        ma->setEnabled(enabled);
-                    }
-                }
-            }
-        }
-
-        const auto buttons = m_ribbonWidget->findChildren<QRibbonButton*>();
-        for (QRibbonButton *btn : buttons) {
-            if (!btn) continue;
-            btn->setEnabled(enabled);
-        }
-    }
-}
-
-// Helper: elide string middle
-[[maybe_unused]] static QString elideMiddle(const QString &text, int maxLength)
-{
-    if (text.length() <= maxLength) return text;
-    const QString ellipsis = "...";
-    const int keep = maxLength - ellipsis.length();
-    if (keep <= 0) return ellipsis;
-    const int left = keep / 2;
-    const int right = keep - left;
-    return text.left(left) + ellipsis + text.right(right);
 }

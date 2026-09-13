@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/RibbonExample">
+        <file alias="actions_en.json">resources/actions.en.json</file>
+        <file alias="actions_zh-CN.json">resources/actions.zh-CN.json</file>
+        <file alias="ribbon_en.json">resources/ribbon.en.json</file>
+        <file alias="ribbon_zh-CN.json">resources/ribbon.zh-CN.json</file>
+    </qresource>
+</RCC>

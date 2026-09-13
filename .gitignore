@@ -1,33 +1,35 @@
-# --- Build directories ---
+# Build
 build/
 build-*/
 out/
 */build/
 */out/
 
-# --- CMake ---
+# CMake / Ninja
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 CTestTestfile.cmake
 Makefile
 CMakeUserPresets.json
-*.cmake.in
+*.ninja
+.ninja_deps
+.ninja_log
 
-# --- Visual Studio ---
+# Visual Studio
 .vs/
 *.vcxproj.user
 *.vcxproj.filters
 *.suo
 *.sln
 
-# --- Qt Creator ---
+# Qt Creator
 *.autosave
 *.user
 *.user.*
 *.qmlproject.user
 
-# --- Compiled objects / libraries ---
+# Compiled output
 *.o
 *.obj
 *.a
@@ -39,11 +41,8 @@ CMakeUserPresets.json
 *.ilk
 *.exp
 *.pyc
-*.ninja
-.ninja_deps
-.ninja_log
 
-# --- Editor / IDE ---
+# Editors / OS
 .idea/
 .vscode/
 *.swp

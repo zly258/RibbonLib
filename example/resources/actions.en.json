@@ -1,0 +1,35 @@
+{
+  "actions": [
+    { "id": "file.new", "name": "New", "description": "Create a new document", "icon": "qt:file", "shortcut": "Ctrl+N" },
+    { "id": "file.open", "name": "Open", "description": "Open a sample document", "icon": "qt:open", "shortcut": "Ctrl+O" },
+    { "id": "file.save", "name": "Save", "description": "Save the current document", "icon": "icons/save.svg", "standardIcon": "save", "shortcut": "Ctrl+S" },
+    { "id": "file.close", "name": "Close", "description": "Close the example", "icon": "qt:close" },
+
+    { "id": "edit.undo", "name": "Undo", "description": "Undo the last edit", "icon": "qt:back", "shortcut": "Ctrl+Z" },
+    { "id": "edit.redo", "name": "Redo", "description": "Redo the last edit", "icon": "qt:forward", "shortcut": "Ctrl+Y" },
+    { "id": "edit.cut", "name": "Cut", "description": "Cut selected text", "icon": "qt:close", "shortcut": "Ctrl+X" },
+    { "id": "edit.copy", "name": "Copy", "description": "Copy selected text", "icon": "qt:file", "shortcut": "Ctrl+C" },
+    { "id": "edit.paste", "name": "Paste", "description": "Paste clipboard text", "icon": "qt:apply", "shortcut": "Ctrl+V" },
+    { "id": "edit.selectAll", "name": "Select All", "description": "Select all text", "icon": "qt:apply", "shortcut": "Ctrl+A" },
+    { "id": "edit.find", "name": "Find Ribbon", "description": "Find the next Ribbon word", "icon": "qt:question", "shortcut": "Ctrl+F" },
+
+    { "id": "insert.content", "name": "Insert", "description": "Insert common content", "icon": "qt:file" },
+    { "id": "insert.heading", "name": "Heading", "description": "Insert a heading", "icon": "qt:file" },
+    { "id": "insert.list", "name": "List", "description": "Insert a bullet list", "icon": "qt:list" },
+    { "id": "insert.table", "name": "Table", "description": "Insert a simple table", "icon": "qt:list" },
+    { "id": "insert.link", "name": "Link", "description": "Insert a sample link", "icon": "qt:forward" },
+    { "id": "insert.date", "name": "Date", "description": "Insert the current date", "icon": "qt:info" },
+
+    { "id": "view.zoomIn", "name": "Zoom In", "description": "Increase editor zoom", "icon": "qt:up" },
+    { "id": "view.zoomOut", "name": "Zoom Out", "description": "Decrease editor zoom", "icon": "qt:down" },
+    { "id": "view.resetZoom", "name": "Reset Zoom", "description": "Reset editor zoom", "icon": "qt:reset" },
+    { "id": "view.readOnly", "name": "Read Only", "description": "Toggle read-only mode", "icon": "qt:info", "checkable": true },
+    { "id": "view.fullscreen", "name": "Full Screen", "description": "Toggle full screen", "icon": "qt:maximize", "checkable": true },
+
+    { "id": "tools.refresh", "name": "Refresh", "description": "Refresh the example state", "icon": "qt:reload" },
+    { "id": "tools.settings", "name": "Settings", "description": "Show example settings", "icon": "qt:settings" },
+
+    { "id": "help.about", "name": "About", "description": "About RibbonLib Example", "icon": "qt:info" },
+    { "id": "language.switch", "name": "中文", "description": "Switch to Chinese" }
+  ]
+}
