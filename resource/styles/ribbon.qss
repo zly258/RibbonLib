@@ -131,6 +131,7 @@ QRibbonWidget#RibbonWidget QScrollArea#RibbonTabScrollArea QWidget#qt_scrollarea
 QRibbonWidget#RibbonWidget QFrame#RibbonGroup {
     background: #ffffff;
     border: none;
+    border-right: 1px solid #e3e6ea;
 }
 QRibbonWidget#RibbonWidget QLabel#RibbonGroupTitle {
     min-height: 18px;
