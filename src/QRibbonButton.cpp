@@ -186,7 +186,7 @@ void QRibbonButton::paintEvent(QPaintEvent *event)
         const QPalette::ColorGroup group = isEnabled() ? QPalette::Active : QPalette::Disabled;
         painter.setPen(option.palette.color(group, QPalette::WindowText));
         const int flags = (m_size == QRibbonButtonSize::Large)
-            ? (Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap)
+            ? (Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap)
             : (Qt::AlignLeft | Qt::AlignVCenter);
         painter.drawText(textRect, flags, m_text);
     }
