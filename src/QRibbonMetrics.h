@@ -9,28 +9,34 @@ namespace QRibbonMetrics
     constexpr int ContentHeight = 96;
     constexpr int RibbonHeight = TopBarHeight + ContentHeight;
 
-    constexpr int GroupContentHeight = 72;
+    constexpr int SmallRowHeight = 22;
+    constexpr int SmallRowCount = 3;
+    constexpr int SmallRowSpacing = 3;
+    constexpr int SmallColumnHeight =
+        SmallRowHeight * SmallRowCount + SmallRowSpacing * (SmallRowCount - 1);
+
+    constexpr int GroupContentHeight = SmallColumnHeight;
     constexpr int GroupTitleHeight = 18;
+    constexpr int GroupTopPadding = 2;
+    constexpr int GroupBottomPadding =
+        ContentHeight - GroupTopPadding - GroupContentHeight - GroupTitleHeight;
     constexpr int GroupSeparatorHeight = 68;
     constexpr int GroupHorizontalPadding = 4;
     constexpr int GroupContentSpacing = 2;
     constexpr int TabGroupSpacing = 6;
-    constexpr int SmallRowHeight = 22;
-    constexpr int SmallRowCount = 3;
-    constexpr int SmallRowSpacing = 1;
 
     constexpr int LargeIconSize = 32;
     constexpr int SmallIconSize = 16;
     constexpr int AccessIconSize = 16;
 
-    constexpr int LargeButtonHeight = 72;
-    constexpr int SmallButtonHeight = 22;
+    constexpr int LargeButtonHeight = GroupContentHeight;
+    constexpr int SmallButtonHeight = SmallRowHeight;
     constexpr int AccessButtonHeight = 24;
     constexpr int LargeButtonMinWidth = 44;
     constexpr int SmallButtonMinWidth = 28;
     constexpr int SplitButtonMinWidth = 40;
     constexpr int LargeButtonMinHeight = 68;
-    constexpr int SmallButtonMinHeight = 22;
+    constexpr int SmallButtonMinHeight = SmallRowHeight;
 
     constexpr int LargeButtonHPadding = 10;
     constexpr int SmallButtonHPadding = 8;
@@ -39,6 +45,18 @@ namespace QRibbonMetrics
     constexpr int LargeIconTop = 6;
     constexpr int LargeTextTop = 43;
     constexpr int SplitArrowWidth = 16;
+
+    static_assert(GroupBottomPadding >= 0,
+                  "Ribbon group metrics exceed the configured content height");
+    static_assert(GroupTopPadding + GroupContentHeight + GroupTitleHeight + GroupBottomPadding
+                      == ContentHeight,
+                  "Ribbon group vertical metrics must exactly fill the content height");
+    static_assert(LargeButtonHeight == GroupContentHeight,
+                  "Large buttons must exactly fill the group content area");
+    static_assert(SmallButtonHeight * SmallRowCount
+                      + SmallRowSpacing * (SmallRowCount - 1)
+                      == GroupContentHeight,
+                  "Small rows must exactly fill the group content area");
 
     inline QSize largeIconSize() { return QSize(LargeIconSize, LargeIconSize); }
     inline QSize smallIconSize() { return QSize(SmallIconSize, SmallIconSize); }

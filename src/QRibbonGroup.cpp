@@ -26,10 +26,11 @@ void QRibbonGroup::setupLayout()
 
     m_mainLayout = new QVBoxLayout(this);
     m_mainLayout->setContentsMargins(QRibbonMetrics::GroupHorizontalPadding,
-                                     2,
+                                     QRibbonMetrics::GroupTopPadding,
                                      QRibbonMetrics::GroupHorizontalPadding,
-                                     0);
+                                     QRibbonMetrics::GroupBottomPadding);
     m_mainLayout->setSpacing(0);
+    m_mainLayout->setAlignment(Qt::AlignTop);
 
     m_contentWidget = new QWidget(this);
     m_contentWidget->setObjectName("RibbonGroupContent");
@@ -200,12 +201,13 @@ void QRibbonGroup::addSmallWidget(QWidget *widget)
         || m_currentSmallRow >= QRibbonMetrics::SmallRowCount) {
         m_currentSmallColumnWidget = new QWidget(m_contentWidget);
         m_currentSmallColumnWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-        m_currentSmallColumnWidget->setFixedHeight(QRibbonMetrics::GroupContentHeight);
+        m_currentSmallColumnWidget->setFixedHeight(QRibbonMetrics::SmallColumnHeight);
 
         m_currentSmallColumnLayout = new QGridLayout(m_currentSmallColumnWidget);
         m_currentSmallColumnLayout->setContentsMargins(0, 0, 0, 0);
         m_currentSmallColumnLayout->setHorizontalSpacing(0);
         m_currentSmallColumnLayout->setVerticalSpacing(QRibbonMetrics::SmallRowSpacing);
+        m_currentSmallColumnLayout->setAlignment(Qt::AlignTop);
 
         for (int row = 0; row < QRibbonMetrics::SmallRowCount; ++row) {
             m_currentSmallColumnLayout->setRowMinimumHeight(row, QRibbonMetrics::SmallRowHeight);
