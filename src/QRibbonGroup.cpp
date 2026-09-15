@@ -204,7 +204,10 @@ void QRibbonGroup::addSmallWidget(QWidget *widget)
         m_currentSmallColumnWidget->setFixedHeight(QRibbonMetrics::SmallColumnHeight);
 
         m_currentSmallColumnLayout = new QGridLayout(m_currentSmallColumnWidget);
-        m_currentSmallColumnLayout->setContentsMargins(0, 0, 0, 0);
+        m_currentSmallColumnLayout->setContentsMargins(0,
+                                                       QRibbonMetrics::SmallColumnVerticalPadding,
+                                                       0,
+                                                       QRibbonMetrics::SmallColumnVerticalPadding);
         m_currentSmallColumnLayout->setHorizontalSpacing(0);
         m_currentSmallColumnLayout->setVerticalSpacing(QRibbonMetrics::SmallRowSpacing);
         m_currentSmallColumnLayout->setAlignment(Qt::AlignTop);

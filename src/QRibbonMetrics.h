@@ -11,9 +11,12 @@ namespace QRibbonMetrics
 
     constexpr int SmallRowHeight = 22;
     constexpr int SmallRowCount = 3;
-    constexpr int SmallRowSpacing = 3;
+    constexpr int SmallRowSpacing = 2;
+    constexpr int SmallColumnVerticalPadding = 1;
     constexpr int SmallColumnHeight =
-        SmallRowHeight * SmallRowCount + SmallRowSpacing * (SmallRowCount - 1);
+        SmallColumnVerticalPadding * 2
+        + SmallRowHeight * SmallRowCount
+        + SmallRowSpacing * (SmallRowCount - 1);
 
     constexpr int GroupContentHeight = SmallColumnHeight;
     constexpr int GroupTitleHeight = 18;
@@ -53,10 +56,11 @@ namespace QRibbonMetrics
                   "Ribbon group vertical metrics must exactly fill the content height");
     static_assert(LargeButtonHeight == GroupContentHeight,
                   "Large buttons must exactly fill the group content area");
-    static_assert(SmallButtonHeight * SmallRowCount
+    static_assert(SmallColumnVerticalPadding * 2
+                      + SmallButtonHeight * SmallRowCount
                       + SmallRowSpacing * (SmallRowCount - 1)
                       == GroupContentHeight,
-                  "Small rows must exactly fill the group content area");
+                  "Small rows and their vertical padding must exactly fill the group content area");
 
     inline QSize largeIconSize() { return QSize(LargeIconSize, LargeIconSize); }
     inline QSize smallIconSize() { return QSize(SmallIconSize, SmallIconSize); }
