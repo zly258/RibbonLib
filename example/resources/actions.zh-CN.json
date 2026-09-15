@@ -2,21 +2,21 @@
   "actions": [
     { "id": "file.new", "name": "新建", "description": "新建文档", "icon": "qt:file", "shortcut": "Ctrl+N" },
     { "id": "file.open", "name": "打开", "description": "打开示例文档", "icon": "qt:open", "shortcut": "Ctrl+O" },
-    { "id": "file.save", "name": "保存", "description": "保存当前文档", "icon": "icons/save.svg", "standardIcon": "save", "shortcut": "Ctrl+S" },
+    { "id": "file.save", "name": "保存", "description": "保存当前文档", "icon": "qt:save", "shortcut": "Ctrl+S" },
     { "id": "file.close", "name": "关闭", "description": "关闭示例程序", "icon": "qt:close" },
 
     { "id": "edit.undo", "name": "撤销", "description": "撤销上一步编辑", "icon": "qt:back", "shortcut": "Ctrl+Z" },
     { "id": "edit.redo", "name": "重做", "description": "重做上一步编辑", "icon": "qt:forward", "shortcut": "Ctrl+Y" },
-    { "id": "edit.cut", "name": "剪切", "description": "剪切选中文本", "icon": "qt:close", "shortcut": "Ctrl+X" },
+    { "id": "edit.cut", "name": "剪切", "description": "剪切选中文本", "icon": "qt:cancel", "shortcut": "Ctrl+X" },
     { "id": "edit.copy", "name": "复制", "description": "复制选中文本", "icon": "qt:file", "shortcut": "Ctrl+C" },
     { "id": "edit.paste", "name": "粘贴", "description": "粘贴剪贴板文本", "icon": "qt:apply", "shortcut": "Ctrl+V" },
-    { "id": "edit.selectAll", "name": "全选", "description": "选择全部文本", "icon": "qt:apply", "shortcut": "Ctrl+A" },
+    { "id": "edit.selectAll", "name": "全选", "description": "选择全部文本", "icon": "qt:list", "shortcut": "Ctrl+A" },
     { "id": "edit.find", "name": "查找 Ribbon", "description": "查找下一个 Ribbon 单词", "icon": "qt:question", "shortcut": "Ctrl+F" },
 
     { "id": "insert.content", "name": "插入", "description": "插入常用内容", "icon": "qt:file" },
     { "id": "insert.heading", "name": "标题", "description": "插入标题", "icon": "qt:file" },
     { "id": "insert.list", "name": "列表", "description": "插入项目列表", "icon": "qt:list" },
-    { "id": "insert.table", "name": "表格", "description": "插入简单表格", "icon": "qt:list" },
+    { "id": "insert.table", "name": "表格", "description": "插入简单表格", "icon": "qt:settings" },
     { "id": "insert.link", "name": "链接", "description": "插入示例链接", "icon": "qt:forward" },
     { "id": "insert.date", "name": "日期", "description": "插入当前日期", "icon": "qt:info" },
 
@@ -28,6 +28,27 @@
 
     { "id": "tools.refresh", "name": "刷新", "description": "刷新示例状态", "icon": "qt:reload" },
     { "id": "tools.settings", "name": "设置", "description": "显示示例设置", "icon": "qt:settings" },
+
+    { "id": "test.checkedTop", "name": "第一行已勾选", "description": "第一行小按钮已勾选", "icon": "qt:apply", "checkable": true, "checked": true },
+    { "id": "test.uncheckedMiddle", "name": "第二行未勾选", "description": "第二行小按钮未勾选", "icon": "qt:info", "checkable": true },
+    { "id": "test.checkedBottom", "name": "第三行已勾选", "description": "第三行小按钮已勾选，用于检查底部边框", "icon": "qt:warning", "checkable": true, "checked": true },
+    { "id": "test.toggleTop", "name": "第一行切换", "description": "第一行可勾选按钮", "icon": "qt:reload", "checkable": true },
+    { "id": "test.toggleMiddle", "name": "第二行切换", "description": "第二行可勾选按钮", "icon": "qt:play", "checkable": true, "checked": true },
+    { "id": "test.toggleBottom", "name": "第三行切换", "description": "第三行可勾选按钮", "icon": "qt:pause", "checkable": true },
+    { "id": "test.largeChecked", "name": "大按钮已勾选", "description": "已勾选的大按钮", "icon": "qt:apply", "checkable": true, "checked": true },
+    { "id": "test.largeToggle", "name": "大按钮切换", "description": "可勾选的大按钮", "icon": "qt:info", "checkable": true },
+    { "id": "test.disabledChecked", "name": "禁用且勾选", "description": "禁用状态下的已勾选按钮", "icon": "qt:warning", "checkable": true, "checked": true, "enabled": false },
+    { "id": "test.disabled", "name": "禁用按钮", "description": "普通禁用按钮", "icon": "qt:stop", "enabled": false },
+    { "id": "test.longSmall", "name": "较长的小按钮文字", "description": "测试较长小按钮文字的宽度计算", "icon": "qt:file" },
+    { "id": "test.longLarge", "name": "较长的大按钮", "description": "测试较长大按钮文字的宽度计算", "icon": "qt:folder" },
+    { "id": "test.splitLarge", "name": "大拆分按钮", "description": "大尺寸拆分按钮测试", "icon": "qt:folder" },
+    { "id": "test.splitSmall", "name": "小拆分按钮", "description": "小尺寸拆分按钮测试", "icon": "qt:settings" },
+    { "id": "test.nativeFile", "name": "文件", "description": "Qt 原生文件图标", "icon": "qt:file" },
+    { "id": "test.nativeFolder", "name": "文件夹", "description": "Qt 原生文件夹图标", "icon": "qt:folder" },
+    { "id": "test.nativeHome", "name": "主目录", "description": "Qt 原生主目录图标", "icon": "qt:home" },
+    { "id": "test.nativeReload", "name": "刷新", "description": "Qt 原生刷新图标", "icon": "qt:reload" },
+    { "id": "test.nativeSettings", "name": "详细信息", "description": "Qt 原生详细视图图标", "icon": "qt:settings" },
+    { "id": "test.nativeTrash", "name": "回收站", "description": "Qt 原生回收站图标", "icon": "qt:trash" },
 
     { "id": "help.about", "name": "关于", "description": "关于 RibbonLib Example", "icon": "qt:info" },
     { "id": "language.switch", "name": "English", "description": "Switch to English" }

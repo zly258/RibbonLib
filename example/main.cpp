@@ -25,8 +25,8 @@ public:
         m_editor->setPlainText(QStringLiteral(
             "RibbonLib Example\n\n"
             "This example is built from JSON and uses only RibbonLib plus Qt Widgets.\n"
-            "Use the tabs, quick access buttons, split button, checkable actions and language switch.\n\n"
-            "The Save action intentionally references a missing custom icon and falls back to a Qt native icon."));
+            "Use Home, Insert and View for normal scenarios. Open Tests for checkable rows, disabled states, mixed large/small layouts, split buttons, long labels and Qt native icons.\n\n"
+            "All example icons come from Qt standard icons, so Windows uses the active native Qt/Windows style."));
         setCentralWidget(m_editor);
 
         m_ribbonHost = new QWidget(this);
@@ -211,6 +211,20 @@ private:
                 showFullScreen();
             } else {
                 showNormal();
+            }
+            return;
+        }
+        if (id.startsWith(QStringLiteral("test."))) {
+            QAction *action = m_helper->action(id);
+            if (action && action->isCheckable()) {
+                const bool checked = action->isChecked();
+                showSimpleStatus(
+                    QStringLiteral("%1: %2").arg(action->text(), checked ? QStringLiteral("checked") : QStringLiteral("unchecked")),
+                    QStringLiteral("%1：%2").arg(action->text(), checked ? QStringLiteral("已勾选") : QStringLiteral("未勾选")));
+            } else {
+                showSimpleStatus(
+                    QStringLiteral("Test action: %1").arg(id),
+                    QStringLiteral("测试动作：%1").arg(id));
             }
             return;
         }

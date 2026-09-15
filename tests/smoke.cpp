@@ -75,7 +75,10 @@ int main(int argc, char *argv[])
 {
   "actions": [
     { "id": "test.action", "name": "Test" },
-    { "id": "test.icon", "name": "Icon", "icon": "missing.svg", "standardIcon": "open" }
+    { "id": "test.icon", "name": "Icon", "icon": "missing.svg", "standardIcon": "open" },
+    { "id": "test.check.top", "name": "Top", "icon": "qt:apply", "checkable": true },
+    { "id": "test.check.middle", "name": "Middle", "icon": "qt:info", "checkable": true },
+    { "id": "test.check.bottom", "name": "Bottom", "icon": "qt:warning", "checkable": true, "checked": true }
   ]
 }
 )json";
@@ -100,6 +103,14 @@ int main(int argc, char *argv[])
               { "id": "test.action", "style": "small", "params": "first" },
               { "id": "test.action", "style": "small", "params": "second" }
             ]
+          },
+          {
+            "title": "Checkable",
+            "items": [
+              { "id": "test.check.top", "style": "small" },
+              { "id": "test.check.middle", "style": "small" },
+              { "id": "test.check.bottom", "style": "small" }
+            ]
           }
         ]
       }
@@ -122,7 +133,34 @@ int main(int argc, char *argv[])
     if (!helper.buildRibbon(&jsonRibbon)) return 12;
 
     const QList<QRibbonButton*> buttons = jsonRibbon.findChildren<QRibbonButton*>();
-    if (buttons.size() != 2) return 13;
+    if (buttons.size() != 5) return 13;
+
+    QList<QRibbonButton*> actionButtons;
+    QRibbonButton *topCheckable = nullptr;
+    QRibbonButton *bottomCheckable = nullptr;
+    for (QRibbonButton *button : buttons) {
+        if (!button) continue;
+        if (button->text() == QStringLiteral("Test")) {
+            actionButtons.append(button);
+        } else if (button->text() == QStringLiteral("Top")) {
+            topCheckable = button;
+        } else if (button->text() == QStringLiteral("Bottom")) {
+            bottomCheckable = button;
+        }
+    }
+
+    if (actionButtons.size() != 2 || !topCheckable || !bottomCheckable) return 20;
+    if (!bottomCheckable->isCheckable() || !bottomCheckable->isChecked()) return 21;
+
+    jsonRibbon.resize(800, jsonRibbon.sizeHint().height());
+    jsonRibbon.show();
+    app.processEvents();
+
+    QWidget *topColumn = topCheckable->parentWidget();
+    QWidget *bottomColumn = bottomCheckable->parentWidget();
+    if (!topColumn || !bottomColumn || topColumn != bottomColumn) return 22;
+    if (topCheckable->geometry().top() <= topColumn->rect().top()) return 23;
+    if (bottomCheckable->geometry().bottom() >= bottomColumn->rect().bottom()) return 24;
 
     const QList<QToolButton*> accessButtons =
         jsonRibbon.accessBarWidget()->findChildren<QToolButton*>(QString(), Qt::FindDirectChildrenOnly);
@@ -141,12 +179,16 @@ int main(int argc, char *argv[])
     }
     if (!foundIconAccess || !foundTextAccess) return 19;
 
-    QMetaObject::invokeMethod(buttons[0], "clicked", Qt::DirectConnection);
-    QMetaObject::invokeMethod(buttons[1], "clicked", Qt::DirectConnection);
+    QMetaObject::invokeMethod(actionButtons[0], "clicked", Qt::DirectConnection);
+    QMetaObject::invokeMethod(actionButtons[1], "clicked", Qt::DirectConnection);
 
     if (action.calls.size() != 2) return 14;
     if (action.calls[0] != QStringLiteral("first")) return 15;
     if (action.calls[1] != QStringLiteral("second")) return 16;
+
+    QMetaObject::invokeMethod(bottomCheckable, "clicked", Qt::DirectConnection);
+    QAction *bottomAction = helper.action(QStringLiteral("test.check.bottom"));
+    if (!bottomAction || bottomAction->isChecked() || bottomCheckable->isChecked()) return 25;
 
     return 0;
 }
