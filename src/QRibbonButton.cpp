@@ -1,5 +1,6 @@
 #include "QRibbonButton.h"
 #include "QRibbonMetrics.h"
+#include "QRibbonTextLayout.h"
 
 #include <QEvent>
 #include <QFontMetrics>
@@ -139,11 +140,13 @@ QSize QRibbonButton::sizeHint() const
     const int textH = m_text.isEmpty() ? 0 : fm.height();
 
     if (m_size == QRibbonButtonSize::Large) {
+        const int wrappedTextW = m_text.isEmpty()
+            ? 0
+            : QRibbonTextLayout::preferredTwoLineWidth(font(), m_text);
         const int width = qMax(QRibbonMetrics::LargeButtonMinWidth,
-                               qMax(iconW, textW) + QRibbonMetrics::LargeButtonHPadding * 2);
-        const int height = qMax(QRibbonMetrics::LargeButtonMinHeight,
-                                iconH + textH + 14);
-        return QSize(width, height);
+                               qMax(iconW, wrappedTextW)
+                                   + QRibbonMetrics::LargeButtonHPadding * 2);
+        return QSize(width, QRibbonMetrics::LargeButtonHeight);
     }
 
     const int spacing = (!effectiveIcon().isNull() && !m_text.isEmpty())
@@ -185,10 +188,11 @@ void QRibbonButton::paintEvent(QPaintEvent *event)
     if (!m_text.isEmpty() && textRect.isValid()) {
         const QPalette::ColorGroup group = isEnabled() ? QPalette::Active : QPalette::Disabled;
         painter.setPen(option.palette.color(group, QPalette::WindowText));
-        const int flags = (m_size == QRibbonButtonSize::Large)
-            ? (Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap)
-            : (Qt::AlignLeft | Qt::AlignVCenter);
-        painter.drawText(textRect, flags, m_text);
+        if (m_size == QRibbonButtonSize::Large) {
+            QRibbonTextLayout::drawTwoLineText(painter, textRect, m_text);
+        } else {
+            painter.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, m_text);
+        }
     }
 }
 
@@ -273,7 +277,7 @@ QRect QRibbonButton::getTextRect() const
         return QRect(QRibbonMetrics::ButtonSidePadding,
                      QRibbonMetrics::LargeTextTop,
                      qMax(0, width() - QRibbonMetrics::ButtonSidePadding * 2),
-                     qMax(0, height() - QRibbonMetrics::LargeTextTop - 2));
+                     QRibbonMetrics::LargeTextHeight);
     }
 
     const int left = effectiveIcon().isNull()

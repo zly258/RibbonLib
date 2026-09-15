@@ -1,6 +1,7 @@
 #include "QRibbonSplitButton.h"
 #include "QRibbonMetrics.h"
 #include "QRibbonStyle.h"
+#include "QRibbonTextLayout.h"
 
 #include <QAction>
 #include <QEvent>
@@ -203,12 +204,13 @@ QSize QRibbonSplitButton::sizeHint() const
     const int textH = m_text.isEmpty() ? 0 : fm.height();
 
     if (m_size == QRibbonButtonSize::Large) {
+        const int wrappedTextW = m_text.isEmpty()
+            ? 0
+            : QRibbonTextLayout::preferredTwoLineWidth(font(), m_text);
         const int width = qMax(QRibbonMetrics::SplitButtonMinWidth,
-                               qMax(iconW, textW + QRibbonMetrics::SplitArrowWidth)
+                               qMax(iconW, wrappedTextW + QRibbonMetrics::SplitArrowWidth)
                                    + QRibbonMetrics::LargeButtonHPadding * 2);
-        const int height = qMax(QRibbonMetrics::LargeButtonMinHeight,
-                                iconH + textH + 14);
-        return QSize(width, height);
+        return QSize(width, QRibbonMetrics::LargeButtonHeight);
     }
 
     const int spacing = (!effectiveIcon().isNull() && !m_text.isEmpty())
@@ -252,19 +254,19 @@ void QRibbonSplitButton::paintEvent(QPaintEvent *event)
         const QPalette::ColorGroup group = isEnabled() ? QPalette::Active : QPalette::Disabled;
         painter.setPen(option.palette.color(group, QPalette::WindowText));
 
-        QString drawText = m_text;
-        const int newlineIndex = drawText.indexOf('\n');
-        if (newlineIndex >= 0) {
-            drawText = drawText.left(newlineIndex);
+        if (m_size == QRibbonButtonSize::Large) {
+            QRibbonTextLayout::drawTwoLineText(painter, textRect, m_text);
+        } else {
+            QString drawText = m_text;
+            const int newlineIndex = drawText.indexOf('\n');
+            if (newlineIndex >= 0) {
+                drawText = drawText.left(newlineIndex);
+            }
+            const QString elidedText = QFontMetrics(font()).elidedText(drawText,
+                                                                       Qt::ElideRight,
+                                                                       textRect.width());
+            painter.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, elidedText);
         }
-
-        const QString elidedText = QFontMetrics(font()).elidedText(drawText,
-                                                                   Qt::ElideRight,
-                                                                   textRect.width());
-        const int flags = (m_size == QRibbonButtonSize::Large)
-            ? (Qt::AlignHCenter | Qt::AlignTop)
-            : (Qt::AlignLeft | Qt::AlignVCenter);
-        painter.drawText(textRect, flags, elidedText);
     }
 
     if (m_menu) {
@@ -424,7 +426,7 @@ QRect QRibbonSplitButton::getTextRect() const
         return QRect(QRibbonMetrics::ButtonSidePadding,
                      QRibbonMetrics::LargeTextTop,
                      qMax(0, width() - QRibbonMetrics::ButtonSidePadding * 2 - right),
-                     qMax(0, height() - QRibbonMetrics::LargeTextTop - 2));
+                     QRibbonMetrics::LargeTextHeight);
     }
 
     const int left = effectiveIcon().isNull()

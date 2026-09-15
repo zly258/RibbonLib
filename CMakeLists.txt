@@ -45,6 +45,7 @@ set(RIBBON_EXTENDED_HEADERS
 set(RIBBON_PRIVATE_HEADERS
     src/QRibbonMetrics.h
     src/QRibbonStyle.h
+    src/QRibbonTextLayout.h
 )
 
 set(RIBBON_CORE_SOURCES

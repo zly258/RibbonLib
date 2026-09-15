@@ -46,8 +46,10 @@ namespace QRibbonMetrics
     constexpr int SmallButtonHPadding = 8;
     constexpr int ButtonTextSpacing = 6;
     constexpr int ButtonSidePadding = 6;
-    constexpr int LargeIconTop = 6;
-    constexpr int LargeTextTop = 43;
+    constexpr int LargeIconTop = 2;
+    constexpr int LargeTextTop = 35;
+    constexpr int LargeTextBottomPadding = 2;
+    constexpr int LargeTextHeight = LargeButtonHeight - LargeTextTop - LargeTextBottomPadding;
     constexpr int SplitArrowWidth = 16;
 
     static_assert(GroupBottomPadding >= 0,
@@ -59,6 +61,10 @@ namespace QRibbonMetrics
                   "Large buttons and their vertical clearance must exactly fill the group content area");
     static_assert(LargeButtonHeight >= LargeButtonMinHeight,
                   "Large button height must satisfy the configured minimum height");
+    static_assert(LargeIconTop + LargeIconSize <= LargeTextTop,
+                  "Large button icon must not overlap the two-line text area");
+    static_assert(LargeTextHeight > 0,
+                  "Large button text area must have positive height");
     static_assert(SmallColumnVerticalPadding * 2
                       + SmallButtonHeight * SmallRowCount
                       + SmallRowSpacing * (SmallRowCount - 1)

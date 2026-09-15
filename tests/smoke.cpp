@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QFile>
+#include <QFontMetrics>
 #include <QMenu>
 #include <QMetaObject>
 #include <QPushButton>
@@ -9,6 +10,7 @@
 
 #include "RibbonLib.h"
 #include "QRibbonMetrics.h"
+#include "QRibbonTextLayout.h"
 
 class TestAction final : public RibbonAction
 {
@@ -193,6 +195,18 @@ int main(int argc, char *argv[])
     QMetaObject::invokeMethod(bottomCheckable, "clicked", Qt::DirectConnection);
     QAction *bottomAction = helper.action(QStringLiteral("test.check.bottom"));
     if (!bottomAction || bottomAction->isChecked() || bottomCheckable->isChecked()) return 25;
+
+    const QString longLabel = QStringLiteral("Long Large Button Label");
+    QRibbonButton largeButton(QIcon(), longLabel, QRibbonButtonSize::Large);
+    const QSize largeHint = largeButton.sizeHint();
+    const int availableTextWidth = largeHint.width() - QRibbonMetrics::ButtonSidePadding * 2;
+    if (QRibbonTextLayout::wrappedLineCount(largeButton.font(), longLabel, availableTextWidth)
+        > QRibbonTextLayout::LargeTextLineCount) return 26;
+    if (largeHint.height() != QRibbonMetrics::LargeButtonHeight) return 27;
+
+    const int singleLineWidth = QFontMetrics(largeButton.font()).horizontalAdvance(longLabel)
+        + QRibbonMetrics::LargeButtonHPadding * 2;
+    if (largeHint.width() >= singleLineWidth) return 28;
 
     return 0;
 }
