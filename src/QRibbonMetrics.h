@@ -25,14 +25,15 @@ namespace QRibbonMetrics
         ContentHeight - GroupTopPadding - GroupContentHeight - GroupTitleHeight;
     constexpr int GroupSeparatorHeight = 68;
     constexpr int GroupHorizontalPadding = 4;
-    constexpr int GroupContentSpacing = 2;
+    constexpr int GroupContentSpacing = 1;
     constexpr int TabGroupSpacing = 6;
 
     constexpr int LargeIconSize = 32;
     constexpr int SmallIconSize = 16;
     constexpr int AccessIconSize = 16;
 
-    constexpr int LargeButtonHeight = GroupContentHeight;
+    constexpr int LargeButtonVerticalPadding = 2;
+    constexpr int LargeButtonHeight = GroupContentHeight - LargeButtonVerticalPadding * 2;
     constexpr int SmallButtonHeight = SmallRowHeight;
     constexpr int AccessButtonHeight = 24;
     constexpr int LargeButtonMinWidth = 44;
@@ -41,7 +42,7 @@ namespace QRibbonMetrics
     constexpr int LargeButtonMinHeight = 68;
     constexpr int SmallButtonMinHeight = SmallRowHeight;
 
-    constexpr int LargeButtonHPadding = 10;
+    constexpr int LargeButtonHPadding = 8;
     constexpr int SmallButtonHPadding = 8;
     constexpr int ButtonTextSpacing = 6;
     constexpr int ButtonSidePadding = 6;
@@ -54,8 +55,10 @@ namespace QRibbonMetrics
     static_assert(GroupTopPadding + GroupContentHeight + GroupTitleHeight + GroupBottomPadding
                       == ContentHeight,
                   "Ribbon group vertical metrics must exactly fill the content height");
-    static_assert(LargeButtonHeight == GroupContentHeight,
-                  "Large buttons must exactly fill the group content area");
+    static_assert(LargeButtonVerticalPadding * 2 + LargeButtonHeight == GroupContentHeight,
+                  "Large buttons and their vertical clearance must exactly fill the group content area");
+    static_assert(LargeButtonHeight >= LargeButtonMinHeight,
+                  "Large button height must satisfy the configured minimum height");
     static_assert(SmallColumnVerticalPadding * 2
                       + SmallButtonHeight * SmallRowCount
                       + SmallRowSpacing * (SmallRowCount - 1)
