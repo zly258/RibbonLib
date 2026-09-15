@@ -2,27 +2,32 @@
 
 [English](./README.md) | 中文
 
-RibbonLib 是一个基于 Qt Widgets 的极简 Ribbon 控件库，适合 CAD、BIM、工程设计和其他桌面工业软件。项目定位保持克制：把基础 Ribbon 做稳定、第三方接入足够简单，不发展成大型 UI 框架。
+RibbonLib 是一个面向 Qt Widgets 的轻量 Ribbon 控件库，适合 CAD、BIM、工程设计及其他桌面工业软件。项目重点是布局可预测、第三方接入简单、样式隔离、公共 API 克制，而不是扩展成大型 UI 框架。
 
-## 1. 环境要求
+## 主要特点
 
-- CMake 3.16+
-- C++17
-- Qt 5.14.2+ 或 Qt 6
-- Windows / Linux
+- 支持 Qt 5.14.2+ 与 Qt 6。
+- C++17，CMake 3.16+。
+- 支持 Windows / Linux。
+- Large / Small 两种 Ribbon 按钮。
+- 支持可勾选按钮及 checked / pressed / disabled 状态。
+- Large 按钮支持最多两行文字，不使用省略号折叠。
+- Split Button 与 Ribbon Menu。
+- Application Menu 与右侧 Quick Access Bar。
+- Context Tab。
+- 支持直接 C++ 构建，也支持可选 JSON 构建。
+- 支持 `qt:<name>` Qt 原生标准图标。
+- 默认 QSS 内嵌并且只作用于 RibbonLib，不污染宿主全局样式。
+- 提供可选的状态保存与 `RibbonAction` 命令抽象。
 
-RibbonLib 运行时不需要额外复制 QSS。默认样式已经编译进库，并且只作用于 RibbonLib 自己的控件。
+## 快速接入
 
-## 2. 最简单的第三方接入
-
-源码依赖时只需要：
+### 源码依赖
 
 ```cmake
 add_subdirectory(thirdparty/RibbonLib)
 target_link_libraries(MyApp PRIVATE RibbonLib::RibbonLib)
 ```
-
-代码中直接使用：
 
 ```cpp
 #include <RibbonLib.h>
@@ -33,87 +38,60 @@ MainWindow::MainWindow(QWidget *parent)
     auto *ribbon = new QRibbonWidget(this);
     setMenuWidget(ribbon);
 
-    auto *home = ribbon->addTab("Home", "home");
-    auto *group = home->addGroup("Document");
-    group->addButton(QIcon(), "New", QRibbonButtonSize::Large);
+    auto *home = ribbon->addTab("主页", "home");
+    auto *document = home->addGroup("文档");
+
+    auto *open = new QRibbonButton(openIcon,
+                                   "打开",
+                                   QRibbonButtonSize::Large,
+                                   document);
+    document->addButton(open);
+
+    connect(open, &QRibbonButton::clicked, this, &MainWindow::openDocument);
 }
 ```
 
-到这里就可以工作。第三方**不需要**：
+到这里即可使用。第三方不需要复制 `ribbon.qss`、调用 `Q_INIT_RESOURCE()`、增加 ThemeManager，也不需要把 RibbonLib 样式设置给整个 `QApplication`。
 
-- 复制 `ribbon.qss`；
-- 用 `QFile` 加载 QSS；
-- 调用 `QApplication::setStyleSheet()`；
-- 调用 `Q_INIT_RESOURCE()`；
-- 配置 Ribbon 资源目录；
-- 初始化 ThemeManager。
-
-## 3. 安装后使用
-
-安装 RibbonLib：
+### 安装后使用
 
 ```bash
 ./build.sh Release --install
 ```
-
-第三方标准 CMake：
 
 ```cmake
 find_package(RibbonLib CONFIG REQUIRED)
 target_link_libraries(MyApp PRIVATE RibbonLib::RibbonLib)
 ```
 
-C++ 使用方式与 `add_subdirectory` 完全一样。
+## 文档
 
-## 4. 主要控件
+README 只保留项目概览与最常用接入方式。完整说明见：
 
-统一公共头文件：
+- [详细使用文档](./docs/USAGE.zh-CN.md)
+- [Detailed usage guide](./docs/USAGE.md)
+- [中文 Ribbon 示例配置](./example/resources/ribbon.zh-CN.json)
+- [中文 Action 定义](./example/resources/actions.zh-CN.json)
 
-```cpp
-#include <RibbonLib.h>
-```
+详细文档包含：C++ 直接构建、Tab / Group、按钮布局规则、Large 两行文字、可勾选按钮、Split Button、Quick Access、Application Menu、Context Tab、自定义 Widget、JSON 规范、图标 fallback、`RibbonAction`、样式、构建选项和常见问题。
 
-主要公开类型：
+## Large 按钮文字规则
 
-- `QRibbonWidget`：Ribbon 根控件、Tab、ApplicationButton、快捷访问；
-- `QRibbonTab`：一个 Ribbon Tab；
-- `QRibbonGroup`：Tab 内分组；
-- `QRibbonButton`：Large / Small 按钮；
-- `QRibbonSplitButton`：主命令 + 下拉菜单；
-- `QApplicationButton`：File/Application 菜单按钮；
-- `QRibbonMenu`：Ribbon 专用局部样式菜单；
-- `RibbonAction`：可选的宿主命令抽象；
-- `QRibbonHelper`：可选 JSON 构建器；
-- `QRibbonStateManager`：轻量当前 Tab 状态保存。
+Large Button 使用固定纵向布局，并且最多显示两行文字。
 
-## 5. 直接用 C++ 构建
+- 文本中包含 `\n` 时，第一处换行符作为显式换行。
+- 没有 `\n` 时，根据按钮宽度自动换行。
+- 自动换行优先按单词边界，必要时允许字符边界换行，因此中文同样可正常处理。
+- Large Button 不使用 `...` 截断标题。
+- 按钮宽度会根据文本计算，保证最多两行可完整显示。
+- 第一处之后的额外换行符会被转为空格，避免出现第三行。
+- Small Button 仍保持紧凑的单行布局。
 
-一个比较实际的基础结构：
+该规则同时适用于 `QRibbonButton` 与 Large `QRibbonSplitButton`。
 
-```cpp
-auto *ribbon = new QRibbonWidget(this);
-setMenuWidget(ribbon);
+## JSON 构建
 
-auto *fileMenu = new QRibbonMenu(this);
-fileMenu->addAction("Open");
-ribbon->applicationButton()->setText("File");
-ribbon->applicationButton()->setApplicationMenu(fileMenu);
-
-auto *home = ribbon->addTab("Home", "home");
-auto *document = home->addGroup("Document");
-
-auto *open = new QRibbonButton(openIcon, "Open", QRibbonButtonSize::Large, document);
-document->addButton(open);
-
-QAction *saveAction = new QAction(saveIcon, "Save", this);
-ribbon->addAccessBarAction(saveAction);
-```
-
-快捷访问栏固定在右侧。有图标的 QAction 只显示图标；没有图标时显示文字。Action 名称和说明仍通过 Tooltip 可见，因此常用命令保持紧凑，语言切换这类无图标动作仍然清晰可读。
-
-## 6. JSON 配置
-
-JSON 是可选能力，不影响直接使用 C++ API。
+JSON 是可选能力，直接 C++ 使用不依赖 JSON。
 
 ```cpp
 QRibbonHelper helper;
@@ -121,12 +99,11 @@ if (!helper.loadFromResources(ribbonPath, actionsPath)) {
     qWarning() << helper.errorString();
     return;
 }
+
 helper.buildRibbon(ribbon);
 ```
 
-### actions.json
-
-Action 负责定义文字、提示、图标、快捷键和基础状态：
+最小 `actions.json`：
 
 ```json
 {
@@ -139,72 +116,21 @@ Action 负责定义文字、提示、图标、快捷键和基础状态：
       "shortcut": "Ctrl+O"
     },
     {
-      "id": "file.save",
-      "name": "保存",
-      "icon": "icons/save.svg",
-      "standardIcon": "save",
-      "shortcut": "Ctrl+S"
-    },
-    {
-      "id": "view.readOnly",
-      "name": "只读",
-      "icon": "qt:info",
+      "id": "view.axes",
+      "name": "坐标轴",
+      "icon": "qt:apply",
       "checkable": true,
-      "checked": false
+      "checked": true
     }
   ]
 }
 ```
 
-支持字段：
-
-- `id`：稳定的命令 ID；
-- `name`：显示文字；
-- `description`：Tooltip；
-- `icon`：自定义文件/Qt Resource 路径，或 `qt:<name>`；
-- `standardIcon`：自定义图标缺失时使用的 Qt 原生 fallback；
-- `shortcut`：例如 `Ctrl+S`，由 QAction 处理，但不会绘制在 Ribbon 按钮表面；
-- `enabled`、`visible`、`checkable`、`checked`：QAction 基础状态。
-
-相对图标路径以 `actions.json` 所在目录为基准；`actions.json` 放在 `:/...` Qt Resource 中时也一样。
-
-### 图标规则
-
-图标解析顺序保持简单：
-
-1. `icon` 指向的自定义文件/资源存在时，使用自定义图标；
-2. 自定义图标不存在时，使用 `standardIcon`；
-3. `icon: "qt:save"` 表示直接使用 Qt 原生标准图标；
-4. 最终都找不到时，退化成文字按钮，不使用问号占位图标。
-
-内置常用别名包括：
-
-`file`、`folder`、`home`、`open`、`save`、`close`、`apply`、`cancel`、`reset`、`help`、`info`、`warning`、`error`、`question`、`back`、`forward`、`up`、`down`、`reload`、`stop`、`play`、`pause`、`trash`、`settings`、`list`、`maximize`。
-
-同时也接受对应的 Qt `SP_...` 名称，例如 `SP_DialogSaveButton`。
-
-### ribbon.json
-
-Ribbon 布局与 Action 定义分离：
+最小 `ribbon.json`：
 
 ```json
 {
   "ribbon": {
-    "applicationButton": {
-      "title": "文件",
-      "menu": [
-        { "id": "file.open" },
-        { "id": "file.save" }
-      ]
-    },
-    "quickAccessBar": {
-      "items": [
-        { "id": "file.save" },
-        { "id": "edit.undo" },
-        { "id": "edit.redo" },
-        { "id": "language.switch" }
-      ]
-    },
     "tabs": [
       {
         "id": "home",
@@ -214,7 +140,7 @@ Ribbon 布局与 Action 定义分离：
             "title": "文档",
             "items": [
               { "id": "file.open", "style": "large" },
-              { "id": "file.save", "style": "small" }
+              { "id": "view.axes", "style": "small" }
             ]
           }
         ]
@@ -224,68 +150,19 @@ Ribbon 布局与 Action 定义分离：
 }
 ```
 
-`style` 有意只保留 `large` 和 `small` 两种，不增加复杂尺寸体系。
+`style` 有意只保留 `large` 和 `small` 两种。
 
-SplitButton：
+## Qt 原生图标
 
-```json
-{
-  "id": "insert.content",
-  "style": "large",
-  "defaultId": "insert.heading",
-  "menu": [
-    { "id": "insert.heading" },
-    { "id": "insert.list" },
-    { "id": "insert.table" }
-  ]
-}
-```
+JSON 中使用 `qt:<name>` 即可使用 Qt 标准图标。实际外观跟随当前 Qt 平台 Style，因此 Windows 下会得到与当前 Qt / Windows 风格一致的图标，不需要额外维护一套图标资源。
 
-同一个 Action 可以出现在多个位置，并且每个位置可通过 `params` 带独立参数，不会互相覆盖。
+常用别名：
 
-## 7. Action 与业务逻辑
+`file`、`folder`、`home`、`open`、`save`、`close`、`apply`、`cancel`、`reset`、`help`、`info`、`warning`、`error`、`question`、`back`、`forward`、`up`、`down`、`reload`、`stop`、`play`、`pause`、`trash`、`settings`、`list`、`maximize`。
 
-RibbonLib 不接管宿主业务逻辑。最简单可以监听：
+同时支持 Qt `SP_...` 名称，例如 `SP_DialogSaveButton`。
 
-```cpp
-connect(&helper, &QRibbonHelper::actionTriggered,
-        this, [this](const QString &id) {
-            // 在宿主程序里执行命令
-        });
-```
-
-也可以继承 `RibbonAction` 并注册到 `QRibbonHelper`。
-
-因此 RibbonLib 不依赖 Document、Viewport、CAD/BIM 模型、Command Bus 或其他应用框架。
-
-## 8. 语言切换
-
-RibbonLib 不强制任何国际化框架。
-
-Example 使用最简单、最直观的双 JSON 方法：
-
-```text
-example/resources/actions.en.json
-example/resources/actions.zh-CN.json
-example/resources/ribbon.en.json
-example/resources/ribbon.zh-CN.json
-```
-
-右上角快捷访问栏保留文字语言切换动作。点击后加载另一组 JSON 并重建 Example Ribbon，所以 Tab、Group、Action、菜单和 Tooltip 会一起切换。正式项目也可以继续使用 Qt `QTranslator`，RibbonLib 不限制宿主的国际化方案。
-
-## 9. 样式
-
-默认样式已内嵌，并且不会修改宿主 `QApplication` 的全局样式。
-
-只修改 Ribbon 主体时：
-
-```cpp
-ribbon->setStyleSheet(myRibbonStyle);
-```
-
-Qt Popup Menu 是独立窗口；如果需要自定义菜单，只对相应 `QRibbonMenu` 或 Application Menu 设置局部 QSS，不要把 Ribbon 专用 QSS 设置给整个 `QApplication`。
-
-## 10. 构建
+## 构建
 
 Linux：
 
@@ -296,7 +173,6 @@ Linux：
 ./build.sh Release --run
 ./build.sh Release --shared
 ./build.sh Release --install
-./build.sh Release --install --prefix /opt/RibbonLib
 ```
 
 Windows PowerShell：
@@ -308,12 +184,9 @@ Windows PowerShell：
 .\build.ps1 -Run
 .\build.ps1 -Shared
 .\build.ps1 -Install
-.\build.ps1 -Install -Prefix C:\RibbonLib
 ```
 
-脚本会自动使用 `Qt5_DIR`、`Qt6_DIR`、`CMAKE_PREFIX_PATH`。
-
-标准 CMake 同样支持：
+也可以直接使用标准 CMake：
 
 ```bash
 cmake -S . -B build
@@ -328,21 +201,24 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-## 11. Example 展示内容
+主要 CMake 选项：
 
-Example 比最小第三方接入案例更完整，当前用于验证：
+- `RIBBONLIB_BUILD_EXAMPLE`
+- `RIBBONLIB_BUILD_TESTS`
+- `RIBBONLIB_BUILD_SHARED`
+- `RIBBONLIB_ENABLE_INSTALL`
 
-- Home / Insert / View / Tools / Help 多个 Tab；
-- Application Menu；
-- 右上角 Quick Access：常用命令用纯图标，语言切换保留文字；
-- 常用演示命令使用 Qt 原生或 fallback 图标；
-- 自定义图标不存在时回退 Qt 原生图标；
-- Large / Small Button；
-- SplitButton / Menu；
-- Checkable Action；
-- 中文 / English 切换；
-- JSON Ribbon 配置；
-- 普通 Qt Widgets 宿主命令分发。
+## Example
+
+Example 不只是最小演示，还承担布局回归检查。`Tests` 页目前覆盖：
+
+- 三行 Small 可勾选按钮；
+- Large checked / unchecked / disabled 状态；
+- Large / Small 混合布局；
+- 长文字与 Large 两行文字；
+- Split Button；
+- Qt 原生图标；
+- 中英文切换。
 
 运行：
 
@@ -350,8 +226,10 @@ Example 比最小第三方接入案例更完整，当前用于验证：
 ./build.sh Release --clean --run
 ```
 
-## 12. 项目边界
+## 项目边界
 
-RibbonLib 不计划加入 Gallery Framework、Dock Framework、MVVM Framework、Command Bus、Plugin System 或大型 Theme Engine。
+RibbonLib 不提供 Dock Framework、MVVM Framework、Command Bus、Plugin System、大型 Theme Engine 或宿主应用架构。它只负责把 Ribbon 本身做好，并允许大型工业软件以较低成本嵌入。
 
-优先级始终是：稳定、第三方使用简单、样式隔离、布局可预测、Qt5/Qt6 兼容、维护成本低。
+## License
+
+RibbonLib 使用 [MIT License](./LICENSE)。

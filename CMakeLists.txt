@@ -140,6 +140,15 @@ if(RIBBONLIB_ENABLE_INSTALL)
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/RibbonLib
     )
 
+    install(FILES
+        LICENSE
+        README.md
+        README.zh-CN.md
+        docs/USAGE.md
+        docs/USAGE.zh-CN.md
+        DESTINATION ${CMAKE_INSTALL_DOCDIR}
+    )
+
     configure_package_config_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RibbonLibConfig.cmake.in"
         "${CMAKE_CURRENT_BINARY_DIR}/RibbonLibConfig.cmake"
