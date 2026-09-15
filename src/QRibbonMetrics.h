@@ -12,7 +12,7 @@ namespace QRibbonMetrics
     constexpr int SmallRowHeight = 22;
     constexpr int SmallRowCount = 3;
     constexpr int SmallRowSpacing = 2;
-    constexpr int SmallColumnVerticalPadding = 1;
+    constexpr int SmallColumnVerticalPadding = 2;
     constexpr int SmallColumnHeight =
         SmallColumnVerticalPadding * 2
         + SmallRowHeight * SmallRowCount

@@ -8,6 +8,7 @@
 #include <QStringList>
 
 #include "RibbonLib.h"
+#include "QRibbonMetrics.h"
 
 class TestAction final : public RibbonAction
 {
@@ -159,8 +160,11 @@ int main(int argc, char *argv[])
     QWidget *topColumn = topCheckable->parentWidget();
     QWidget *bottomColumn = bottomCheckable->parentWidget();
     if (!topColumn || !bottomColumn || topColumn != bottomColumn) return 22;
-    if (topCheckable->geometry().top() <= topColumn->rect().top()) return 23;
-    if (bottomCheckable->geometry().bottom() >= bottomColumn->rect().bottom()) return 24;
+
+    const int topClearance = topCheckable->geometry().top() - topColumn->rect().top();
+    const int bottomClearance = bottomColumn->rect().bottom() - bottomCheckable->geometry().bottom();
+    if (topClearance < QRibbonMetrics::SmallColumnVerticalPadding) return 23;
+    if (bottomClearance < QRibbonMetrics::SmallColumnVerticalPadding) return 24;
 
     const QList<QToolButton*> accessButtons =
         jsonRibbon.accessBarWidget()->findChildren<QToolButton*>(QString(), Qt::FindDirectChildrenOnly);
