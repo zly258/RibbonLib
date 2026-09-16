@@ -33,7 +33,7 @@ void QApplicationButton::setApplicationMenu(QMenu *menu)
 QSize QApplicationButton::sizeHint() const
 {
     const QFontMetrics fm(font());
-    const int width = qMax(QRibbonMetrics::LargeButtonMinWidth,
+    const int width = qMax(QRibbonMetrics::ApplicationButtonMinWidth,
                            fm.horizontalAdvance(text()) + 24);
     return QSize(width, QRibbonMetrics::TopBarHeight);
 }
@@ -41,7 +41,7 @@ QSize QApplicationButton::sizeHint() const
 QSize QApplicationButton::minimumSizeHint() const
 {
     const QFontMetrics fm(font());
-    const int width = qMax(QRibbonMetrics::LargeButtonMinWidth,
+    const int width = qMax(QRibbonMetrics::ApplicationButtonMinWidth,
                            fm.horizontalAdvance(text()) + 18);
     return QSize(width, QRibbonMetrics::TopBarHeight);
 }

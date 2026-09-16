@@ -36,6 +36,7 @@ namespace QRibbonMetrics
     constexpr int LargeButtonHeight = GroupContentHeight - LargeButtonVerticalPadding * 2;
     constexpr int SmallButtonHeight = SmallRowHeight;
     constexpr int AccessButtonHeight = 24;
+    constexpr int ApplicationButtonMinWidth = 44;
     constexpr int LargeButtonMinHeight = 68;
     constexpr int SmallButtonMinHeight = SmallRowHeight;
 
