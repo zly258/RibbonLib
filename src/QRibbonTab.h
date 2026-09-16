@@ -2,6 +2,7 @@
 #define QRIBBONTAB_H
 
 #include "RibbonLibGlobal.h"
+#include "QRibbonButtonSize.h"
 
 #include <QHBoxLayout>
 #include <QList>
@@ -9,6 +10,7 @@
 #include <QString>
 #include <QWidget>
 
+class QAction;
 class QRibbonGroup;
 
 class RIBBONLIB_EXPORT QRibbonTab : public QWidget
@@ -18,6 +20,9 @@ public:
     explicit QRibbonTab(const QString &title, QWidget *parent = nullptr);
 
     QRibbonGroup *addGroup(const QString &title);
+    QRibbonGroup *addGroup(const QString &title,
+                           const QList<QAction*> &actions,
+                           QRibbonButtonSize size = QRibbonButtonSize::Small);
     void removeGroup(QRibbonGroup *group);
     void clear();
     void refreshLayout();

@@ -4,8 +4,10 @@
 #include "RibbonLibGlobal.h"
 #include "QRibbonButtonSize.h"
 
+#include <QAction>
 #include <QIcon>
 #include <QKeySequence>
+#include <QPointer>
 #include <QRect>
 #include <QSize>
 #include <QString>
@@ -19,6 +21,9 @@ public:
     explicit QRibbonButton(QWidget *parent = nullptr);
     QRibbonButton(const QIcon &icon,
                   const QString &text,
+                  QRibbonButtonSize size = QRibbonButtonSize::Large,
+                  QWidget *parent = nullptr);
+    QRibbonButton(QAction *action,
                   QRibbonButtonSize size = QRibbonButtonSize::Large,
                   QWidget *parent = nullptr);
 
@@ -43,6 +48,9 @@ public:
     void setShortcut(const QKeySequence &shortcut);
     QKeySequence shortcut() const;
 
+    void setDefaultAction(QAction *action);
+    QAction *defaultAction() const { return m_action.data(); }
+
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
 
@@ -65,12 +73,14 @@ private:
     QIcon effectiveIcon() const;
     void setupButton();
     void updateStateProperties();
+    void syncFromAction();
 
     QRibbonButtonSize m_size {QRibbonButtonSize::Large};
     QIcon m_icon;
     QString m_text;
     QString m_shortcutText;
     QSize m_iconSize {32, 32};
+    QPointer<QAction> m_action;
 
     bool m_checkable {false};
     bool m_checked {false};

@@ -5,8 +5,10 @@
 #include "QRibbonButtonSize.h"
 
 #include <QFrame>
+#include <QList>
 #include <QString>
 
+class QAction;
 class QGridLayout;
 class QHBoxLayout;
 class QIcon;
@@ -24,6 +26,10 @@ public:
     void addButton(const QIcon &icon,
                    const QString &text,
                    QRibbonButtonSize size = QRibbonButtonSize::Large);
+    QRibbonButton *addAction(QAction *action,
+                             QRibbonButtonSize size = QRibbonButtonSize::Large);
+    void addActions(const QList<QAction*> &actions,
+                    QRibbonButtonSize size = QRibbonButtonSize::Small);
     void addSeparator();
     void addWidget(QWidget *widget);
     void addLargeWidget(QWidget *widget);

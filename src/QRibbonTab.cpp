@@ -184,6 +184,15 @@ QRibbonGroup *QRibbonTab::addGroup(const QString &title)
     return group;
 }
 
+QRibbonGroup *QRibbonTab::addGroup(const QString &title,
+                                   const QList<QAction*> &actions,
+                                   QRibbonButtonSize size)
+{
+    QRibbonGroup *group = addGroup(title);
+    group->addActions(actions, size);
+    return group;
+}
+
 void QRibbonTab::removeGroup(QRibbonGroup *group)
 {
     if (!group || !m_groups.contains(group)) {

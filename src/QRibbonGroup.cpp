@@ -2,6 +2,7 @@
 #include "QRibbonButton.h"
 #include "QRibbonMetrics.h"
 
+#include <QAction>
 #include <QFontMetrics>
 #include <QFrame>
 #include <QGridLayout>
@@ -153,6 +154,24 @@ void QRibbonGroup::addButton(const QIcon &icon, const QString &text, QRibbonButt
 {
     auto *button = new QRibbonButton(icon, text, size, this);
     addButton(button);
+}
+
+QRibbonButton *QRibbonGroup::addAction(QAction *action, QRibbonButtonSize size)
+{
+    if (!action) {
+        return nullptr;
+    }
+
+    auto *button = new QRibbonButton(action, size, this);
+    addButton(button);
+    return button;
+}
+
+void QRibbonGroup::addActions(const QList<QAction*> &actions, QRibbonButtonSize size)
+{
+    for (QAction *action : actions) {
+        addAction(action, size);
+    }
 }
 
 void QRibbonGroup::addSeparator()

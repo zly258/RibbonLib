@@ -39,6 +39,16 @@ QRibbonButton::QRibbonButton(const QIcon &icon,
     setupButton();
 }
 
+QRibbonButton::QRibbonButton(QAction *action,
+                             QRibbonButtonSize size,
+                             QWidget *parent)
+    : QWidget(parent)
+    , m_size(size)
+{
+    setupButton();
+    setDefaultAction(action);
+}
+
 void QRibbonButton::setupButton()
 {
     setObjectName("RibbonButton");
@@ -131,6 +141,53 @@ QKeySequence QRibbonButton::shortcut() const
     return QKeySequence::fromString(m_shortcutText, QKeySequence::NativeText);
 }
 
+void QRibbonButton::setDefaultAction(QAction *action)
+{
+    if (m_action == action) {
+        syncFromAction();
+        return;
+    }
+
+    if (m_action) {
+        disconnect(m_action, nullptr, this, nullptr);
+    }
+
+    m_action = action;
+    if (!m_action) {
+        return;
+    }
+
+    connect(m_action, &QAction::changed, this, &QRibbonButton::syncFromAction);
+    connect(m_action, &QObject::destroyed, this, [this]() {
+        m_action = nullptr;
+    });
+    syncFromAction();
+}
+
+void QRibbonButton::syncFromAction()
+{
+    if (!m_action) {
+        return;
+    }
+
+    m_icon = m_action->icon();
+    m_text = m_action->text();
+    m_shortcutText = m_action->shortcut().toString(QKeySequence::NativeText);
+    m_checkable = m_action->isCheckable();
+    m_checked = m_checkable && m_action->isChecked();
+    m_pressed = false;
+
+    QWidget::setEnabled(m_action->isEnabled());
+    setVisible(m_action->isVisible());
+    setToolTip(m_action->toolTip().isEmpty() ? m_action->text() : m_action->toolTip());
+    setStatusTip(m_action->statusTip());
+    setAccessibleName(m_action->text());
+
+    updateStateProperties();
+    updateGeometry();
+    update();
+}
+
 QSize QRibbonButton::sizeHint() const
 {
     const QFontMetrics fm(font());
@@ -220,11 +277,14 @@ void QRibbonButton::mouseReleaseEvent(QMouseEvent *event)
     m_pressed = false;
 
     if (trigger) {
-        if (m_checkable) {
+        if (!m_action && m_checkable) {
             m_checked = !m_checked;
             emit toggled(m_checked);
         }
         emit clicked();
+        if (m_action) {
+            m_action->trigger();
+        }
     }
 
     updateStateProperties();
