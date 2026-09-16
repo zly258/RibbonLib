@@ -2,32 +2,54 @@
 
 [English](./README.md) | 中文
 
-RibbonLib 是一个面向 Qt Widgets 的轻量 Ribbon 控件库，适合 CAD、BIM、工程设计及其他桌面工业软件。项目重点是布局可预测、第三方接入简单、样式隔离、公共 API 克制，而不是扩展成大型 UI 框架。
+RibbonLib 是一个面向 Qt Widgets 的轻量 Ribbon 控件库，适合 CAD、BIM、工程设计及其他桌面工业软件。当前推荐的接入方式是 **QAction 优先**：宿主负责命令和业务状态，RibbonLib 负责 Ribbon 的显示、布局、DPI、自身样式和状态呈现。
 
 ## 主要特点
 
 - 支持 Qt 5.14.2+ 与 Qt 6。
 - C++17，CMake 3.16+。
-- 支持 Windows / Linux。
+- Windows / Linux。
+- 以 `QAction` 为核心的直接构建方式。
+- 自动同步 `enabled / visible / checkable / checked / shortcut` 等状态。
 - Large / Small 两种 Ribbon 按钮。
-- 支持可勾选按钮及 checked / pressed / disabled 状态。
-- Large 按钮支持最多两行文字，不使用省略号折叠。
-- Split Button 与 Ribbon Menu。
-- Application Menu 与右侧 Quick Access Bar。
-- Context Tab。
-- 支持直接 C++ 构建，也支持可选 JSON 构建。
-- 支持 `qt:<name>` Qt 原生标准图标。
-- 默认 QSS 内嵌并且只作用于 RibbonLib，不污染宿主全局样式。
-- 提供可选的状态保存与 `RibbonAction` 命令抽象。
+- Split Button、Ribbon Menu、Application Menu。
+- Quick Access Bar 与 Context Tab。
+- 默认 QSS 内嵌并且只作用于 RibbonLib，第三方无需复制样式文件。
+- 推荐直接 C++ 构建；JSON 仍作为可选能力保留。
+- 可选 `RibbonAction` 命令抽象与状态保存。
 
-## 快速接入
+## 推荐用法
 
-### 源码依赖
+### 1. 引入 RibbonLib
 
 ```cmake
 add_subdirectory(thirdparty/RibbonLib)
 target_link_libraries(MyApp PRIVATE RibbonLib::RibbonLib)
 ```
+
+安装后也可以：
+
+```cmake
+find_package(RibbonLib CONFIG REQUIRED)
+target_link_libraries(MyApp PRIVATE RibbonLib::RibbonLib)
+```
+
+### 2. 业务命令统一使用 `QAction`
+
+```cpp
+auto *openAction = new QAction(openIcon, tr("打开"), this);
+openAction->setShortcut(QKeySequence::Open);
+connect(openAction, &QAction::triggered,
+        this, &MainWindow::openDocument);
+
+auto *axesAction = new QAction(axesIcon, tr("坐标轴"), this);
+axesAction->setCheckable(true);
+axesAction->setChecked(true);
+connect(axesAction, &QAction::toggled,
+        this, &MainWindow::setAxesVisible);
+```
+
+### 3. Ribbon 代码只描述结构
 
 ```cpp
 #include <RibbonLib.h>
@@ -38,60 +60,101 @@ MainWindow::MainWindow(QWidget *parent)
     auto *ribbon = new QRibbonWidget(this);
     setMenuWidget(ribbon);
 
-    auto *home = ribbon->addTab("主页", "home");
-    auto *document = home->addGroup("文档");
+    auto *home = ribbon->addTab(tr("主页"), "home");
 
-    auto *open = new QRibbonButton(openIcon,
-                                   "打开",
-                                   QRibbonButtonSize::Large,
-                                   document);
-    document->addButton(open);
+    home->addGroup(tr("文档"), {
+        openAction,
+        saveAction
+    });
 
-    connect(open, &QRibbonButton::clicked, this, &MainWindow::openDocument);
+    home->addGroup(tr("视图"), {
+        axesAction,
+        wireframeAction,
+        perspectiveAction
+    });
 }
 ```
 
-到这里即可使用。第三方不需要复制 `ribbon.qss`、调用 `Q_INIT_RESOURCE()`、增加 ThemeManager，也不需要把 RibbonLib 样式设置给整个 `QApplication`。
+需要指定按钮尺寸时：
 
-### 安装后使用
-
-```bash
-./build.sh Release --install
+```cpp
+auto *document = home->addGroup(tr("文档"));
+document->addAction(openAction, QRibbonButtonSize::Large);
+document->addActions({saveAction, closeAction}, QRibbonButtonSize::Small);
 ```
 
-```cmake
-find_package(RibbonLib CONFIG REQUIRED)
-target_link_libraries(MyApp PRIVATE RibbonLib::RibbonLib)
+RibbonLib 会自动从 `QAction` 同步：
+
+`text / icon / enabled / visible / checkable / checked / shortcut / toolTip / statusTip`
+
+点击 RibbonButton 时会直接触发同一个 `QAction`。
+
+推荐原则就是：**一个 QAction，多处 UI 复用，命令状态只维护一份。**
+
+## 低层按钮 API
+
+如果某个控件并不是标准应用命令，也仍然可以直接创建 `QRibbonButton`：
+
+```cpp
+auto *button = new QRibbonButton(icon,
+                                 tr("自定义"),
+                                 QRibbonButtonSize::Large,
+                                 group);
+connect(button, &QRibbonButton::clicked,
+        this, &MainWindow::runCustomCommand);
+group->addButton(button);
 ```
 
-## 文档
+也可以直接绑定已有 QAction：
 
-README 只保留项目概览与最常用接入方式。完整说明见：
+```cpp
+auto *button = new QRibbonButton(openAction,
+                                 QRibbonButtonSize::Large,
+                                 group);
+group->addButton(button);
+```
 
-- [详细使用文档](./docs/USAGE.zh-CN.md)
-- [Detailed usage guide](./docs/USAGE.md)
-- [中文 Ribbon 示例配置](./example/resources/ribbon.zh-CN.json)
-- [中文 Action 定义](./example/resources/actions.zh-CN.json)
+但普通业务命令优先使用：
 
-详细文档包含：C++ 直接构建、Tab / Group、按钮布局规则、Large 两行文字、可勾选按钮、Split Button、Quick Access、Application Menu、Context Tab、自定义 Widget、JSON 规范、图标 fallback、`RibbonAction`、样式、构建选项和常见问题。
+```cpp
+group->addAction(openAction);
+```
 
-## Large 按钮文字规则
+这样业务代码最少。
 
-Large Button 使用固定纵向布局，并且最多显示两行文字。
+## Quick Access Bar
 
-- 文本中包含 `\n` 时，第一处换行符作为显式换行。
-- 没有 `\n` 时，根据按钮宽度自动换行。
-- 自动换行优先按单词边界，必要时允许字符边界换行，因此中文同样可正常处理。
-- Large Button 不使用 `...` 截断标题。
-- 按钮宽度会根据文本计算，保证最多两行可完整显示。
-- 第一处之后的额外换行符会被转为空格，避免出现第三行。
-- Small Button 仍保持紧凑的单行布局。
+同一套 QAction 可以直接复用：
 
-该规则同时适用于 `QRibbonButton` 与 Large `QRibbonSplitButton`。
+```cpp
+ribbon->addAccessBarAction(saveAction);
+ribbon->addAccessBarAction(undoAction);
+ribbon->addAccessBarAction(redoAction);
+```
+
+显示规则：
+
+- QAction 有图标：Quick Access 只显示图标；
+- QAction 没有图标：显示文字。
+
+快捷键仍属于 QAction，不会额外绘制在按钮表面。
+
+## 样式与布局
+
+第三方项目不需要：
+
+- 复制 `ribbon.qss`；
+- 调用 `Q_INIT_RESOURCE()` 初始化 RibbonLib 资源；
+- 增加 ThemeManager；
+- 把 RibbonLib QSS 设置到整个 `QApplication`；
+- 手动处理按钮高度、图标尺寸、checked 边框、Group 间距；
+- 针对 125% / 150% DPI 在业务代码里补特殊尺寸。
+
+这些都应该由 RibbonLib 自己负责。
 
 ## JSON 构建
 
-JSON 是可选能力，直接 C++ 使用不依赖 JSON。
+JSON 仍然保留，适合需要配置驱动 Ribbon 的项目，但不再作为最简单的默认接入方式。
 
 ```cpp
 QRibbonHelper helper;
@@ -100,67 +163,21 @@ if (!helper.loadFromResources(ribbonPath, actionsPath)) {
     return;
 }
 
-helper.buildRibbon(ribbon);
-```
-
-最小 `actions.json`：
-
-```json
-{
-  "actions": [
-    {
-      "id": "file.open",
-      "name": "打开",
-      "description": "打开文档",
-      "icon": "qt:open",
-      "shortcut": "Ctrl+O"
-    },
-    {
-      "id": "view.axes",
-      "name": "坐标轴",
-      "icon": "qt:apply",
-      "checkable": true,
-      "checked": true
-    }
-  ]
+if (!helper.buildRibbon(ribbon)) {
+    qWarning() << helper.errorString();
 }
 ```
 
-最小 `ribbon.json`：
+如果 Ribbon 结构在 C++ 中已经明确，并且程序本身已有 QAction 命令层，推荐直接使用 QAction API。
 
-```json
-{
-  "ribbon": {
-    "tabs": [
-      {
-        "id": "home",
-        "title": "主页",
-        "panels": [
-          {
-            "title": "文档",
-            "items": [
-              { "id": "file.open", "style": "large" },
-              { "id": "view.axes", "style": "small" }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-}
-```
+## 文档
 
-`style` 有意只保留 `large` 和 `small` 两种。
+- [详细使用文档](./docs/USAGE.zh-CN.md)
+- [Detailed usage guide](./docs/USAGE.md)
+- [中文 JSON 示例](./example/resources/ribbon.zh-CN.json)
+- [中文 Action 定义](./example/resources/actions.zh-CN.json)
 
-## Qt 原生图标
-
-JSON 中使用 `qt:<name>` 即可使用 Qt 标准图标。实际外观跟随当前 Qt 平台 Style，因此 Windows 下会得到与当前 Qt / Windows 风格一致的图标，不需要额外维护一套图标资源。
-
-常用别名：
-
-`file`、`folder`、`home`、`open`、`save`、`close`、`apply`、`cancel`、`reset`、`help`、`info`、`warning`、`error`、`question`、`back`、`forward`、`up`、`down`、`reload`、`stop`、`play`、`pause`、`trash`、`settings`、`list`、`maximize`。
-
-同时支持 Qt `SP_...` 名称，例如 `SP_DialogSaveButton`。
+详细文档包含 QAction 优先接入、状态同步、Tab / Group、Large / Small 布局、可勾选命令、Split Button、Quick Access、Application Menu、Context Tab、自定义 Widget、JSON、`RibbonAction`、样式、迁移方式和构建选项。
 
 ## 构建
 
@@ -186,49 +203,16 @@ Windows PowerShell：
 .\build.ps1 -Install
 ```
 
-也可以直接使用标准 CMake：
+标准 CMake 同样支持：
 
 ```bash
 cmake -S . -B build
 cmake --build build
 ```
 
-测试默认不参与普通构建：
-
-```bash
-cmake -S . -B build -DRIBBONLIB_BUILD_TESTS=ON
-cmake --build build
-ctest --test-dir build --output-on-failure
-```
-
-主要 CMake 选项：
-
-- `RIBBONLIB_BUILD_EXAMPLE`
-- `RIBBONLIB_BUILD_TESTS`
-- `RIBBONLIB_BUILD_SHARED`
-- `RIBBONLIB_ENABLE_INSTALL`
-
-## Example
-
-Example 不只是最小演示，还承担布局回归检查。`Tests` 页目前覆盖：
-
-- 三行 Small 可勾选按钮；
-- Large checked / unchecked / disabled 状态；
-- Large / Small 混合布局；
-- 长文字与 Large 两行文字；
-- Split Button；
-- Qt 原生图标；
-- 中英文切换。
-
-运行：
-
-```bash
-./build.sh Release --clean --run
-```
-
 ## 项目边界
 
-RibbonLib 不提供 Dock Framework、MVVM Framework、Command Bus、Plugin System、大型 Theme Engine 或宿主应用架构。它只负责把 Ribbon 本身做好，并允许大型工业软件以较低成本嵌入。
+RibbonLib 不提供 Dock Framework、MVVM Framework、Command Bus、Plugin System、大型 Theme Engine 或宿主业务架构。它只负责把 Ribbon 做好，业务逻辑和命令仍由宿主拥有。
 
 ## License
 

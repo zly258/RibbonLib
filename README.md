@@ -2,32 +2,54 @@
 
 English | [中文](./README.zh-CN.md)
 
-RibbonLib is a compact Qt Widgets Ribbon library for CAD, BIM, engineering and other desktop applications. It focuses on predictable layout, low integration cost, local styling and a small public API instead of becoming a general UI framework.
+RibbonLib is a compact Qt Widgets Ribbon library for CAD, BIM, engineering and other desktop applications. The recommended integration model is now **QAction first**: the host owns commands and state, while RibbonLib owns Ribbon presentation, layout, DPI behavior and local styling.
 
 ## Highlights
 
-- Qt 5.14.2+ and Qt 6 support.
+- Qt 5.14.2+ and Qt 6.
 - C++17 and CMake 3.16+.
 - Windows and Linux.
-- Large and Small Ribbon buttons.
-- Checkable buttons with checked / pressed / disabled states.
-- Large buttons support up to two text lines without ellipsis.
+- `QAction`-first construction with automatic state synchronization.
+- Large / Small Ribbon buttons.
+- Checkable, enabled, visible and shortcut state synchronized from `QAction`.
 - Split buttons and Ribbon menus.
-- Application menu and right-aligned Quick Access bar.
-- Context tabs.
-- Direct C++ construction or optional JSON-driven construction.
-- Qt standard icons through `qt:<name>` aliases.
-- Embedded, Ribbon-scoped default QSS; no external stylesheet is required by consumers.
-- Optional state persistence and `RibbonAction` command abstraction.
+- Application menu, Quick Access bar and context tabs.
+- Embedded Ribbon-scoped QSS; consumers do not copy or load `ribbon.qss`.
+- Direct C++ construction is the recommended path; JSON remains optional.
+- Optional `RibbonAction` abstraction and state persistence.
 
-## Quick start
+## Recommended usage
 
-### Source dependency
+### 1. Link RibbonLib
 
 ```cmake
 add_subdirectory(thirdparty/RibbonLib)
 target_link_libraries(MyApp PRIVATE RibbonLib::RibbonLib)
 ```
+
+or after installation:
+
+```cmake
+find_package(RibbonLib CONFIG REQUIRED)
+target_link_libraries(MyApp PRIVATE RibbonLib::RibbonLib)
+```
+
+### 2. Define application commands as `QAction`
+
+```cpp
+auto *openAction = new QAction(openIcon, tr("Open"), this);
+openAction->setShortcut(QKeySequence::Open);
+connect(openAction, &QAction::triggered,
+        this, &MainWindow::openDocument);
+
+auto *axesAction = new QAction(axesIcon, tr("Axes"), this);
+axesAction->setCheckable(true);
+axesAction->setChecked(true);
+connect(axesAction, &QAction::toggled,
+        this, &MainWindow::setAxesVisible);
+```
+
+### 3. Only describe Ribbon structure
 
 ```cpp
 #include <RibbonLib.h>
@@ -38,60 +60,85 @@ MainWindow::MainWindow(QWidget *parent)
     auto *ribbon = new QRibbonWidget(this);
     setMenuWidget(ribbon);
 
-    auto *home = ribbon->addTab("Home", "home");
-    auto *document = home->addGroup("Document");
+    auto *home = ribbon->addTab(tr("Home"), "home");
 
-    auto *open = new QRibbonButton(openIcon,
-                                   "Open",
-                                   QRibbonButtonSize::Large,
-                                   document);
-    document->addButton(open);
+    home->addGroup(tr("Document"), {
+        openAction,
+        saveAction
+    });
 
-    connect(open, &QRibbonButton::clicked, this, &MainWindow::openDocument);
+    home->addGroup(tr("View"), {
+        axesAction,
+        wireframeAction,
+        perspectiveAction
+    });
 }
 ```
 
-That is sufficient. A consumer does not need to copy `ribbon.qss`, call `Q_INIT_RESOURCE()`, install a theme manager, or apply RibbonLib styling to the whole `QApplication`.
+For a specific button size:
 
-### Installed package
-
-```bash
-./build.sh Release --install
+```cpp
+auto *document = home->addGroup(tr("Document"));
+document->addAction(openAction, QRibbonButtonSize::Large);
+document->addActions({saveAction, closeAction}, QRibbonButtonSize::Small);
 ```
 
-```cmake
-find_package(RibbonLib CONFIG REQUIRED)
-target_link_libraries(MyApp PRIVATE RibbonLib::RibbonLib)
+RibbonLib automatically synchronizes `text`, `icon`, `enabled`, `visible`, `checkable`, `checked`, `shortcut`, `toolTip` and `statusTip` from the bound `QAction`. Triggering the Ribbon button triggers the same `QAction`.
+
+This is the preferred model: **one QAction, multiple UI entry points, one source of command state**.
+
+## Low-level button API
+
+`QRibbonButton` can still be created manually when there is no application `QAction`:
+
+```cpp
+auto *button = new QRibbonButton(icon,
+                                 tr("Custom"),
+                                 QRibbonButtonSize::Large,
+                                 group);
+connect(button, &QRibbonButton::clicked,
+        this, &MainWindow::runCustomCommand);
+group->addButton(button);
 ```
 
-## Documentation
+It can also bind an existing action directly:
 
-The README is intentionally concise. Detailed integration and behavior documentation is available here:
+```cpp
+auto *button = new QRibbonButton(openAction,
+                                 QRibbonButtonSize::Large,
+                                 group);
+group->addButton(button);
+```
 
-- [Detailed usage guide](./docs/USAGE.md)
-- [详细使用文档](./docs/USAGE.zh-CN.md)
-- [English example configuration](./example/resources/ribbon.en.json)
-- [English action definitions](./example/resources/actions.en.json)
+For normal application commands, prefer `group->addAction()` instead of constructing the button yourself.
 
-The detailed guide covers direct C++ construction, tabs and groups, button layout rules, two-line large labels, checkable actions, split buttons, Quick Access, Application Menu, context tabs, custom widgets, JSON schema conventions, icon fallback, `RibbonAction`, styling, build options and troubleshooting.
+## Quick Access
 
-## Large-button text behavior
+The same `QAction` can be reused:
 
-Large buttons have a fixed vertical layout and support at most two visual text lines.
+```cpp
+ribbon->addAccessBarAction(saveAction);
+ribbon->addAccessBarAction(undoAction);
+ribbon->addAccessBarAction(redoAction);
+```
 
-- An explicit `\n` requests a line break.
-- Without `\n`, text may wrap automatically when the calculated button width requires it.
-- Wrapping prefers word boundaries and can fall back to character boundaries.
-- Large-button labels are not elided with `...`.
-- The button width is calculated so the label fits in at most two lines.
-- Additional explicit line breaks after the first are normalized into spaces.
-- Small buttons remain compact single-row controls.
+If an action has an icon, Quick Access shows the icon only. If it has no icon, text is shown.
 
-This behavior applies to both `QRibbonButton` and large `QRibbonSplitButton`.
+## Styling
 
-## JSON-driven Ribbon
+Consumers do **not** need to:
 
-JSON support is optional. Direct C++ use has no JSON dependency.
+- copy `ribbon.qss`;
+- call `Q_INIT_RESOURCE()` for RibbonLib resources;
+- install a theme manager;
+- apply RibbonLib QSS to the whole `QApplication`;
+- manually fix button height, icon size, check-state geometry or group spacing.
+
+RibbonLib keeps its default style and layout behavior local to Ribbon controls.
+
+## JSON construction
+
+JSON remains supported for applications that need data-driven Ribbon definitions, but it is optional and no longer the simplest path.
 
 ```cpp
 QRibbonHelper helper;
@@ -100,67 +147,21 @@ if (!helper.loadFromResources(ribbonPath, actionsPath)) {
     return;
 }
 
-helper.buildRibbon(ribbon);
-```
-
-Minimal `actions.json`:
-
-```json
-{
-  "actions": [
-    {
-      "id": "file.open",
-      "name": "Open",
-      "description": "Open a document",
-      "icon": "qt:open",
-      "shortcut": "Ctrl+O"
-    },
-    {
-      "id": "view.axes",
-      "name": "Axes",
-      "icon": "qt:apply",
-      "checkable": true,
-      "checked": true
-    }
-  ]
+if (!helper.buildRibbon(ribbon)) {
+    qWarning() << helper.errorString();
 }
 ```
 
-Minimal `ribbon.json`:
+Use direct `QAction` construction when the Ribbon structure is known in C++ and the application already has a command layer.
 
-```json
-{
-  "ribbon": {
-    "tabs": [
-      {
-        "id": "home",
-        "title": "Home",
-        "panels": [
-          {
-            "title": "Document",
-            "items": [
-              { "id": "file.open", "style": "large" },
-              { "id": "view.axes", "style": "small" }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-}
-```
+## Documentation
 
-`style` is intentionally limited to `large` and `small`.
+- [Detailed usage guide](./docs/USAGE.md)
+- [详细使用文档](./docs/USAGE.zh-CN.md)
+- [English JSON example](./example/resources/ribbon.en.json)
+- [English action definitions](./example/resources/actions.en.json)
 
-## Qt standard icons
-
-Use `qt:<name>` in JSON to request a Qt standard icon. The actual appearance follows the active Qt platform style, which gives appropriate native-looking icons on Windows without bundling a separate icon set.
-
-Common aliases include:
-
-`file`, `folder`, `home`, `open`, `save`, `close`, `apply`, `cancel`, `reset`, `help`, `info`, `warning`, `error`, `question`, `back`, `forward`, `up`, `down`, `reload`, `stop`, `play`, `pause`, `trash`, `settings`, `list`, `maximize`.
-
-Qt `SP_...` names are also accepted, for example `SP_DialogSaveButton`.
+The detailed guide covers QAction-first construction, state synchronization, tabs/groups, Large/Small layout, checkable commands, split buttons, Quick Access, Application Menu, context tabs, custom widgets, JSON, `RibbonAction`, styling, migration and build options.
 
 ## Build
 
@@ -193,42 +194,9 @@ cmake -S . -B build
 cmake --build build
 ```
 
-Tests are opt-in:
-
-```bash
-cmake -S . -B build -DRIBBONLIB_BUILD_TESTS=ON
-cmake --build build
-ctest --test-dir build --output-on-failure
-```
-
-Important CMake options:
-
-- `RIBBONLIB_BUILD_EXAMPLE`
-- `RIBBONLIB_BUILD_TESTS`
-- `RIBBONLIB_BUILD_SHARED`
-- `RIBBONLIB_ENABLE_INSTALL`
-
-## Example
-
-The example intentionally contains more cases than a minimal application. In particular, the `Tests` tab exercises:
-
-- checkable Small buttons in all three rows;
-- checked, unchecked and disabled Large buttons;
-- mixed Large / Small groups;
-- long labels and two-line Large labels;
-- Split buttons;
-- Qt standard icons;
-- English / Chinese switching.
-
-Run it with:
-
-```bash
-./build.sh Release --clean --run
-```
-
 ## Scope
 
-RibbonLib intentionally does not provide a Dock framework, MVVM framework, command bus, plugin system, large theme engine or application architecture. It is meant to stay a focused Ribbon library that can be embedded into larger products without forcing the host to adopt unrelated infrastructure.
+RibbonLib intentionally does not provide a Dock framework, MVVM framework, command bus, plugin system, large theme engine or host-application architecture. It stays focused on Ribbon presentation and lets the host keep ownership of business logic and commands.
 
 ## License
 
