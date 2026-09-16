@@ -196,17 +196,46 @@ int main(int argc, char *argv[])
     QAction *bottomAction = helper.action(QStringLiteral("test.check.bottom"));
     if (!bottomAction || bottomAction->isChecked() || bottomCheckable->isChecked()) return 25;
 
+    // Large labels stay on one line unless displayText contains an explicit newline.
     const QString longLabel = QStringLiteral("Long Large Button Label");
     QRibbonButton largeButton(QIcon(), longLabel, QRibbonButtonSize::Large);
     const QSize largeHint = largeButton.sizeHint();
-    const int availableTextWidth = largeHint.width() - QRibbonMetrics::ButtonSidePadding * 2;
-    if (QRibbonTextLayout::wrappedLineCount(largeButton.font(), longLabel, availableTextWidth)
-        > QRibbonTextLayout::LargeTextLineCount) return 26;
-    if (largeHint.height() != QRibbonMetrics::LargeButtonHeight) return 27;
-
     const int singleLineWidth = QFontMetrics(largeButton.font()).horizontalAdvance(longLabel)
         + QRibbonMetrics::LargeButtonHPadding * 2;
-    if (largeHint.width() >= singleLineWidth) return 28;
+    if (largeHint.width() != singleLineWidth) return 26;
+    if (largeHint.height() != QRibbonMetrics::LargeButtonHeight) return 27;
+
+    QAction presentationAction(QStringLiteral("Model Settings"), &ribbon);
+    QRibbonButton presentationButton(&presentationAction, QRibbonButtonSize::Large);
+    presentationButton.setDisplayText(QStringLiteral("Model\nSettings"));
+    if (presentationAction.text() != QStringLiteral("Model Settings")) return 28;
+    if (presentationButton.displayText() != QStringLiteral("Model\nSettings")) return 29;
+
+    const QFontMetrics presentationMetrics(presentationButton.font());
+    const int explicitTwoLineWidth = qMax(presentationMetrics.horizontalAdvance(QStringLiteral("Model")),
+                                          presentationMetrics.horizontalAdvance(QStringLiteral("Settings")))
+        + QRibbonMetrics::LargeButtonHPadding * 2;
+    if (presentationButton.sizeHint().width() != explicitTwoLineWidth) return 30;
+
+    // There is no fixed minimum width: compact content remains compact.
+    QRibbonButton compactButton(QIcon(), QStringLiteral("I"), QRibbonButtonSize::Small);
+    const int compactWidth = QFontMetrics(compactButton.font()).horizontalAdvance(QStringLiteral("I"))
+        + QRibbonMetrics::SmallButtonHPadding * 2;
+    if (compactButton.sizeHint().width() != compactWidth) return 31;
+
+    // Split buttons bind directly to QAction and preserve Ribbon-only display text.
+    QAction primaryAction(QStringLiteral("Create Plate"), &ribbon);
+    QAction beamAction(QStringLiteral("Create Beam"), &ribbon);
+    QRibbonMenu splitMenu;
+    splitMenu.addAction(&primaryAction);
+    splitMenu.addAction(&beamAction);
+    QRibbonSplitButton splitButton(&primaryAction,
+                                   &splitMenu,
+                                   QRibbonButtonSize::Large);
+    splitButton.setDisplayText(QStringLiteral("Create\nMember"));
+    if (splitButton.defaultAction() != &primaryAction) return 32;
+    if (splitButton.displayText() != QStringLiteral("Create\nMember")) return 33;
+    if (primaryAction.text() != QStringLiteral("Create Plate")) return 34;
 
     return 0;
 }
