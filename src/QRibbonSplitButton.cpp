@@ -77,7 +77,7 @@ QRibbonSplitButton::QRibbonSplitButton(QAction *defaultAction,
 QRibbonSplitButton::~QRibbonSplitButton()
 {
     if (m_defaultAction) disconnect(m_defaultAction, nullptr, this, nullptr);
-    if (m_menu && m_menu->parent() == this) delete m_menu;
+    if (m_menu && m_menu->parent() == this) delete m_menu.data();
 }
 
 void QRibbonSplitButton::setButtonSize(QRibbonButtonSize size)
@@ -167,7 +167,7 @@ void QRibbonSplitButton::setMenu(QMenu *menu)
     connect(m_menu, &QMenu::triggered, this, &QRibbonSplitButton::onMenuActionTriggered);
 
     if (m_defaultAction) {
-        m_menu->setDefaultAction(m_defaultAction);
+        m_menu->setDefaultAction(m_defaultAction.data());
     } else if (m_menu->defaultAction()) {
         setDefaultAction(m_menu->defaultAction());
     }
@@ -191,7 +191,7 @@ void QRibbonSplitButton::setDefaultAction(QAction *action)
         return;
     }
 
-    if (m_menu) m_menu->setDefaultAction(m_defaultAction);
+    if (m_menu) m_menu->setDefaultAction(m_defaultAction.data());
     connect(m_defaultAction, &QAction::changed, this, &QRibbonSplitButton::syncFromDefaultAction);
     connect(m_defaultAction, &QObject::destroyed, this, [this]() { m_defaultAction = nullptr; });
     syncFromDefaultAction();
