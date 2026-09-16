@@ -4,12 +4,9 @@
 #include <QFont>
 #include <QFontMetrics>
 #include <QPainter>
-#include <QPointF>
 #include <QRect>
 #include <QString>
 #include <QStringList>
-#include <QTextLayout>
-#include <QTextOption>
 
 namespace QRibbonTextLayout
 {
@@ -21,8 +18,6 @@ namespace QRibbonTextLayout
         normalized.replace(QStringLiteral("\r\n"), QStringLiteral("\n"));
         normalized.replace(QChar('\r'), QChar('\n'));
 
-        // Large buttons intentionally support at most two visual lines. Keep the
-        // first explicit line break and turn any additional breaks into spaces.
         const int firstBreak = normalized.indexOf(QChar('\n'));
         if (firstBreak >= 0) {
             for (int i = firstBreak + 1; i < normalized.size(); ++i) {
@@ -34,57 +29,20 @@ namespace QRibbonTextLayout
         return normalized;
     }
 
-    inline int wrappedLineCount(const QFont &font, const QString &text, int width)
-    {
-        const QString normalized = normalizedLargeText(text);
-        if (normalized.isEmpty()) return 0;
-
-        QTextLayout layout(normalized, font);
-        QTextOption option;
-        option.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
-        option.setAlignment(Qt::AlignLeft);
-        layout.setTextOption(option);
-
-        int count = 0;
-        layout.beginLayout();
-        while (true) {
-            QTextLine line = layout.createLine();
-            if (!line.isValid()) break;
-            line.setLineWidth(qMax(1, width));
-            ++count;
-        }
-        layout.endLayout();
-        return count;
-    }
-
     inline int preferredTwoLineWidth(const QFont &font,
                                      const QString &text,
-                                     int minimumWidth = 1)
+                                     int minimumWidth = 0)
     {
         const QString normalized = normalizedLargeText(text);
-        if (normalized.isEmpty()) return qMax(1, minimumWidth);
+        if (normalized.isEmpty()) return qMax(0, minimumWidth);
 
         const QFontMetrics fm(font);
-        int high = qMax(1, minimumWidth);
-        const QStringList explicitLines = normalized.split(QChar('\n'));
-        for (const QString &line : explicitLines) {
-            high = qMax(high, fm.horizontalAdvance(line));
+        int width = qMax(0, minimumWidth);
+        const QStringList lines = normalized.split(QChar('\n'));
+        for (const QString &line : lines) {
+            width = qMax(width, fm.horizontalAdvance(line));
         }
-
-        if (wrappedLineCount(font, normalized, high) > LargeTextLineCount) {
-            return high;
-        }
-
-        int low = qMax(1, minimumWidth);
-        while (low < high) {
-            const int middle = low + (high - low) / 2;
-            if (wrappedLineCount(font, normalized, middle) <= LargeTextLineCount) {
-                high = middle;
-            } else {
-                low = middle + 1;
-            }
-        }
-        return low;
+        return width;
     }
 
     inline void drawTwoLineText(QPainter &painter, const QRect &rect, const QString &text)
@@ -92,28 +50,20 @@ namespace QRibbonTextLayout
         const QString normalized = normalizedLargeText(text);
         if (normalized.isEmpty() || !rect.isValid()) return;
 
-        QTextLayout layout(normalized, painter.font());
-        QTextOption option;
-        option.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
-        option.setAlignment(Qt::AlignLeft);
-        layout.setTextOption(option);
-
-        qreal y = 0.0;
-        int lineCount = 0;
-        layout.beginLayout();
-        while (lineCount < LargeTextLineCount) {
-            QTextLine line = layout.createLine();
-            if (!line.isValid()) break;
-            line.setLineWidth(qMax(1, rect.width()));
-            line.setPosition(QPointF(0.0, y));
-            y += line.height();
-            ++lineCount;
-        }
-        layout.endLayout();
+        const QStringList lines = normalized.split(QChar('\n'));
+        const QFontMetrics fm(painter.font());
+        const int lineHeight = fm.height();
+        const int lineCount = qMin(lines.size(), LargeTextLineCount);
+        const int totalHeight = lineHeight * lineCount;
+        int y = rect.top() + qMax(0, (rect.height() - totalHeight) / 2);
 
         painter.save();
         painter.setClipRect(rect);
-        layout.draw(&painter, rect.topLeft());
+        for (int i = 0; i < lineCount; ++i) {
+            const QRect lineRect(rect.left(), y, rect.width(), lineHeight);
+            painter.drawText(lineRect, Qt::AlignLeft | Qt::AlignVCenter, lines.at(i));
+            y += lineHeight;
+        }
         painter.restore();
     }
 }

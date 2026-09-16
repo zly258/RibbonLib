@@ -36,9 +36,6 @@ namespace QRibbonMetrics
     constexpr int LargeButtonHeight = GroupContentHeight - LargeButtonVerticalPadding * 2;
     constexpr int SmallButtonHeight = SmallRowHeight;
     constexpr int AccessButtonHeight = 24;
-    constexpr int LargeButtonMinWidth = 44;
-    constexpr int SmallButtonMinWidth = 28;
-    constexpr int SplitButtonMinWidth = 40;
     constexpr int LargeButtonMinHeight = 68;
     constexpr int SmallButtonMinHeight = SmallRowHeight;
 
@@ -62,7 +59,7 @@ namespace QRibbonMetrics
     static_assert(LargeButtonHeight >= LargeButtonMinHeight,
                   "Large button height must satisfy the configured minimum height");
     static_assert(LargeIconTop + LargeIconSize <= LargeTextTop,
-                  "Large button icon must not overlap the two-line text area");
+                  "Large button icon must not overlap the text area");
     static_assert(LargeTextHeight > 0,
                   "Large button text area must have positive height");
     static_assert(SmallColumnVerticalPadding * 2

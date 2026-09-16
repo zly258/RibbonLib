@@ -13,8 +13,10 @@ class QGridLayout;
 class QHBoxLayout;
 class QIcon;
 class QLabel;
+class QMenu;
 class QVBoxLayout;
 class QRibbonButton;
+class QRibbonSplitButton;
 
 class RIBBONLIB_EXPORT QRibbonGroup : public QFrame
 {
@@ -28,8 +30,15 @@ public:
                    QRibbonButtonSize size = QRibbonButtonSize::Large);
     QRibbonButton *addAction(QAction *action,
                              QRibbonButtonSize size = QRibbonButtonSize::Large);
+    QRibbonButton *addAction(QAction *action,
+                             QRibbonButtonSize size,
+                             const QString &displayText);
     void addActions(const QList<QAction*> &actions,
                     QRibbonButtonSize size = QRibbonButtonSize::Small);
+    QRibbonSplitButton *addSplitAction(QAction *defaultAction,
+                                       QMenu *menu,
+                                       QRibbonButtonSize size = QRibbonButtonSize::Large,
+                                       const QString &displayText = QString());
     void addSeparator();
     void addWidget(QWidget *widget);
     void addLargeWidget(QWidget *widget);
@@ -51,7 +60,7 @@ private:
     void markContentAdded();
 
     QString m_title;
-    int m_contentWidth {45};
+    int m_contentWidth {0};
     int m_contentItemCount {0};
     QLabel *m_titleLabel {nullptr};
     QVBoxLayout *m_mainLayout {nullptr};

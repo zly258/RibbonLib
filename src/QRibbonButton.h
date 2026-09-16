@@ -32,10 +32,13 @@ public:
 
     void setIcon(const QIcon &icon);
     void setText(const QString &text);
+    void setDisplayText(const QString &text);
+    void clearDisplayText();
 
     QIcon icon() const { return m_icon; }
     QSize iconSize() const { return m_iconSize; }
     QString text() const { return m_text; }
+    QString displayText() const;
 
     void setEnabled(bool enabled);
 
@@ -71,6 +74,7 @@ protected:
 private:
     void updateIconSize();
     QIcon effectiveIcon() const;
+    QString effectiveText() const;
     void setupButton();
     void updateStateProperties();
     void syncFromAction();
@@ -78,9 +82,11 @@ private:
     QRibbonButtonSize m_size {QRibbonButtonSize::Large};
     QIcon m_icon;
     QString m_text;
+    QString m_displayText;
     QString m_shortcutText;
     QSize m_iconSize {32, 32};
     QPointer<QAction> m_action;
+    bool m_hasDisplayText {false};
 
     bool m_checkable {false};
     bool m_checked {false};

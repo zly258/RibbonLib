@@ -1,6 +1,7 @@
 #include "QRibbonGroup.h"
 #include "QRibbonButton.h"
 #include "QRibbonMetrics.h"
+#include "QRibbonSplitButton.h"
 
 #include <QAction>
 #include <QFontMetrics>
@@ -9,6 +10,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLayoutItem>
+#include <QMenu>
 #include <QVBoxLayout>
 
 QRibbonGroup::QRibbonGroup(const QString &title, QWidget *parent)
@@ -60,10 +62,7 @@ void QRibbonGroup::setupLayout()
 void QRibbonGroup::markContentAdded()
 {
     ++m_contentItemCount;
-    if (!isVisible()) {
-        setVisible(true);
-    }
-
+    if (!isVisible()) setVisible(true);
     updateContentWidth();
     emit layoutChanged();
 }
@@ -77,12 +76,11 @@ void QRibbonGroup::updateContentWidth()
     }
 
     int contentWidth = 0;
-
     if (m_contentLayout) {
         const QMargins margins = m_contentLayout->contentsMargins();
         contentWidth += margins.left() + margins.right();
-
         int visibleItemCount = 0;
+
         for (int i = 0; i < m_contentLayout->count(); ++i) {
             QLayoutItem *item = m_contentLayout->itemAt(i);
             if (!item) continue;
@@ -115,10 +113,9 @@ void QRibbonGroup::updateContentWidth()
     const int groupPadding = QRibbonMetrics::GroupHorizontalPadding * 2;
     const int titleWidth = m_titleLabel
         ? QFontMetrics(m_titleLabel->font()).horizontalAdvance(m_title) + groupPadding + 4
-        : QRibbonMetrics::LargeButtonMinWidth;
+        : 0;
+    const int newWidth = qMax(contentWidth + groupPadding, titleWidth);
 
-    const int newWidth = qMax(QRibbonMetrics::LargeButtonMinWidth,
-                              qMax(contentWidth + groupPadding, titleWidth));
     if (m_contentWidth == newWidth) {
         updateGeometry();
         return;
@@ -142,12 +139,8 @@ QSize QRibbonGroup::minimumSizeHint() const
 void QRibbonGroup::addButton(QRibbonButton *button)
 {
     if (!button) return;
-
-    if (button->buttonSize() == QRibbonButtonSize::Large) {
-        addLargeWidget(button);
-    } else {
-        addSmallWidget(button);
-    }
+    if (button->buttonSize() == QRibbonButtonSize::Large) addLargeWidget(button);
+    else addSmallWidget(button);
 }
 
 void QRibbonGroup::addButton(const QIcon &icon, const QString &text, QRibbonButtonSize size)
@@ -158,20 +151,37 @@ void QRibbonGroup::addButton(const QIcon &icon, const QString &text, QRibbonButt
 
 QRibbonButton *QRibbonGroup::addAction(QAction *action, QRibbonButtonSize size)
 {
-    if (!action) {
-        return nullptr;
-    }
-
+    if (!action) return nullptr;
     auto *button = new QRibbonButton(action, size, this);
     addButton(button);
     return button;
 }
 
+QRibbonButton *QRibbonGroup::addAction(QAction *action,
+                                       QRibbonButtonSize size,
+                                       const QString &displayText)
+{
+    QRibbonButton *button = addAction(action, size);
+    if (button) button->setDisplayText(displayText);
+    return button;
+}
+
 void QRibbonGroup::addActions(const QList<QAction*> &actions, QRibbonButtonSize size)
 {
-    for (QAction *action : actions) {
-        addAction(action, size);
-    }
+    for (QAction *action : actions) addAction(action, size);
+}
+
+QRibbonSplitButton *QRibbonGroup::addSplitAction(QAction *defaultAction,
+                                                 QMenu *menu,
+                                                 QRibbonButtonSize size,
+                                                 const QString &displayText)
+{
+    if (!defaultAction) return nullptr;
+    auto *button = new QRibbonSplitButton(defaultAction, menu, size, this);
+    if (!displayText.isNull()) button->setDisplayText(displayText);
+    if (size == QRibbonButtonSize::Large) addLargeWidget(button);
+    else addSmallWidget(button);
+    return button;
 }
 
 void QRibbonGroup::addSeparator()
@@ -181,18 +191,13 @@ void QRibbonGroup::addSeparator()
     separator->setFrameShape(QFrame::VLine);
     separator->setFrameShadow(QFrame::Plain);
     separator->setFixedSize(1, QRibbonMetrics::GroupSeparatorHeight);
-
-    if (m_contentLayout) {
-        m_contentLayout->addWidget(separator);
-    }
-
+    if (m_contentLayout) m_contentLayout->addWidget(separator);
     markContentAdded();
 }
 
 void QRibbonGroup::addWidget(QWidget *widget)
 {
     if (!widget || !m_contentLayout) return;
-
     widget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     m_contentLayout->addWidget(widget);
     markContentAdded();
@@ -201,11 +206,9 @@ void QRibbonGroup::addWidget(QWidget *widget)
 void QRibbonGroup::addLargeWidget(QWidget *widget)
 {
     if (!widget || !m_contentLayout) return;
-
     m_currentSmallColumnWidget = nullptr;
     m_currentSmallColumnLayout = nullptr;
     m_currentSmallRow = 0;
-
     widget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     widget->setFixedHeight(QRibbonMetrics::LargeButtonHeight);
     m_contentLayout->addWidget(widget);
@@ -230,7 +233,6 @@ void QRibbonGroup::addSmallWidget(QWidget *widget)
         m_currentSmallColumnLayout->setHorizontalSpacing(0);
         m_currentSmallColumnLayout->setVerticalSpacing(QRibbonMetrics::SmallRowSpacing);
         m_currentSmallColumnLayout->setAlignment(Qt::AlignTop);
-
         for (int row = 0; row < QRibbonMetrics::SmallRowCount; ++row) {
             m_currentSmallColumnLayout->setRowMinimumHeight(row, QRibbonMetrics::SmallRowHeight);
             m_currentSmallColumnLayout->setRowStretch(row, 0);
@@ -248,13 +250,11 @@ void QRibbonGroup::addSmallWidget(QWidget *widget)
     for (int i = 0; i < m_currentSmallColumnLayout->count(); ++i) {
         QLayoutItem *item = m_currentSmallColumnLayout->itemAt(i);
         if (!item || !item->widget()) continue;
-
         QWidget *childWidget = item->widget();
         columnWidth = qMax(columnWidth,
                            qMax(childWidget->sizeHint().width(),
                                 childWidget->minimumSizeHint().width()));
     }
-
     m_currentSmallColumnWidget->setMinimumWidth(columnWidth);
 
     ++m_currentSmallRow;
@@ -263,19 +263,14 @@ void QRibbonGroup::addSmallWidget(QWidget *widget)
         m_currentSmallColumnLayout = nullptr;
         m_currentSmallRow = 0;
     }
-
     markContentAdded();
 }
 
 void QRibbonGroup::setTitle(const QString &title)
 {
     if (m_title == title) return;
-
     m_title = title;
-    if (m_titleLabel) {
-        m_titleLabel->setText(m_title);
-    }
-
+    if (m_titleLabel) m_titleLabel->setText(m_title);
     updateContentWidth();
     update();
 }

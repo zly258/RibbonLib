@@ -4,14 +4,14 @@
 #include "RibbonLibGlobal.h"
 #include "QRibbonButtonSize.h"
 
+#include <QAction>
 #include <QIcon>
+#include <QMenu>
+#include <QPointer>
 #include <QRect>
 #include <QSize>
 #include <QString>
 #include <QWidget>
-
-class QAction;
-class QMenu;
 
 class RIBBONLIB_EXPORT QRibbonSplitButton : public QWidget
 {
@@ -23,6 +23,10 @@ public:
                        const QString &text,
                        QRibbonButtonSize size = QRibbonButtonSize::Large,
                        QWidget *parent = nullptr);
+    QRibbonSplitButton(QAction *defaultAction,
+                       QMenu *menu,
+                       QRibbonButtonSize size = QRibbonButtonSize::Large,
+                       QWidget *parent = nullptr);
     ~QRibbonSplitButton() override;
 
     void setButtonSize(QRibbonButtonSize size);
@@ -30,6 +34,8 @@ public:
 
     void setIcon(const QIcon &icon);
     void setText(const QString &text);
+    void setDisplayText(const QString &text);
+    void clearDisplayText();
     void setCheckable(bool checkable);
     void setChecked(bool checked);
     void setMenu(QMenu *menu);
@@ -38,8 +44,9 @@ public:
     QIcon icon() const { return m_icon; }
     QSize iconSize() const { return m_iconSize; }
     QString text() const { return m_text; }
-    QMenu *menu() const { return m_menu; }
-    QAction *defaultAction() const { return m_defaultAction; }
+    QString displayText() const;
+    QMenu *menu() const { return m_menu.data(); }
+    QAction *defaultAction() const { return m_defaultAction.data(); }
     bool isChecked() const { return m_checked; }
     bool isCheckable() const { return m_checkable; }
 
@@ -69,6 +76,7 @@ private slots:
 private:
     void updateIconSize();
     QIcon effectiveIcon() const;
+    QString effectiveText() const;
     void updateHoverState(const QPoint &pos);
     void updateStateProperties();
     void syncFromDefaultAction();
@@ -76,14 +84,16 @@ private:
     QRibbonButtonSize m_size {QRibbonButtonSize::Large};
     QIcon m_icon;
     QString m_text;
+    QString m_displayText;
     QSize m_iconSize {32, 32};
+    bool m_hasDisplayText {false};
     bool m_checkable {false};
     bool m_checked {false};
     bool m_pressed {false};
     bool m_arrowPressed {false};
     bool m_arrowHovered {false};
-    QMenu *m_menu {nullptr};
-    QAction *m_defaultAction {nullptr};
+    QPointer<QMenu> m_menu;
+    QPointer<QAction> m_defaultAction;
 };
 
 #endif // QRIBBONSPLITBUTTON_H
