@@ -55,9 +55,7 @@ private:
         QList<QAction*> result;
         result.reserve(static_cast<int>(ids.size()));
         for (const char *id : ids) {
-            if (QAction *a = action(id)) {
-                result.append(a);
-            }
+            if (QAction *a = action(id)) result.append(a);
         }
         return result;
     }
@@ -70,30 +68,16 @@ private:
     {
         QAction *displayAction = action(displayActionId);
         QAction *defaultAction = action(defaultActionId);
-        if (!group || !displayAction || !defaultAction) {
-            return nullptr;
-        }
+        if (!group || !displayAction || !defaultAction) return nullptr;
 
         auto *menu = new QRibbonMenu(group);
-        for (QAction *menuAction : actions(menuActionIds)) {
-            menu->addAction(menuAction);
-        }
+        for (QAction *menuAction : actions(menuActionIds)) menu->addAction(menuAction);
 
-        auto *button = new QRibbonSplitButton(displayAction->icon(),
-                                              displayAction->text(),
-                                              size,
-                                              group);
-        button->setMenu(menu);
-        button->setDefaultAction(defaultAction);
-        // Keep placement text/icon independent from the command used by the primary area.
-        button->setIcon(displayAction->icon());
-        button->setText(displayAction->text());
-
-        if (size == QRibbonButtonSize::Large) {
-            group->addLargeWidget(button);
-        } else {
-            group->addSmallWidget(button);
-        }
+        auto *button = group->addSplitAction(defaultAction,
+                                             menu,
+                                             size,
+                                             displayAction->text());
+        if (button) button->setIcon(displayAction->icon());
         return button;
     }
 
@@ -180,7 +164,10 @@ private:
         mixed->addAction(action("test.nativeFolder"), QRibbonButtonSize::Large);
         mixed->addActions(actions({"test.longSmall", "test.nativeReload", "test.nativeSettings"}),
                           QRibbonButtonSize::Small);
-        mixed->addAction(action("test.longLarge"), QRibbonButtonSize::Large);
+        mixed->addAction(action("test.longLarge"),
+                         QRibbonButtonSize::Large,
+                         isChinese() ? QStringLiteral("较长的\n大按钮")
+                                     : QStringLiteral("Long Large\nButton"));
 
         auto *split = tab->addGroup(isChinese() ? QStringLiteral("拆分按钮") : QStringLiteral("Split buttons"));
         addSplitButton(split,
@@ -215,8 +202,6 @@ private:
                                      QStringLiteral("help"));
         auto *group = tab->addGroup(isChinese() ? QStringLiteral("帮助") : QStringLiteral("Help"));
         group->addAction(action("help.about"), QRibbonButtonSize::Large);
-        // Text-only language switching is intentionally Small; this avoids producing a tall,
-        // narrow Large command just because it has no icon.
         group->addAction(action("language.switch"), QRibbonButtonSize::Small);
     }
 
@@ -238,14 +223,14 @@ private:
             ? QStringLiteral(
                 "RibbonLib 示例\n\n"
                 "本示例使用 C++ + QAction 构建 Ribbon 布局。\n"
-                "Action 的文字、图标和快捷键仍从 JSON 加载，仅用于保持双语示例简洁；JSON 不再负责 Ribbon 的 Tab/Group 布局。\n"
-                "主页、插入、视图展示常规用法；测试页覆盖三行 Small、可勾选状态、禁用状态、Large/Small 混排、Split Button、长文字和 Qt 原生图标。\n\n"
+                "Large 按钮不自动换行；测试页中的两行 Large 文本使用 Ribbon displayText 显式指定。\n"
+                "Split Button 使用 QAction-first API 构建，按钮宽度完全按实际内容计算。\n\n"
                 "推荐业务项目维护 QAction，RibbonLib 只负责展示、布局和状态同步。")
             : QStringLiteral(
                 "RibbonLib Example\n\n"
                 "This example builds Ribbon layout with C++ + QAction.\n"
-                "Action text, icons and shortcuts are still loaded from JSON only to keep the bilingual example compact; JSON no longer owns Tab/Group layout.\n"
-                "Home, Insert and View show normal usage. Tests covers three-row Small buttons, checkable/disabled states, mixed Large/Small layout, Split Buttons, long labels and Qt native icons.\n\n"
+                "Large buttons do not wrap automatically; the two-line Large test uses explicit Ribbon displayText.\n"
+                "Split Buttons use the QAction-first API and button width follows actual content.\n\n"
                 "Recommended application code owns QActions; RibbonLib owns presentation, layout and state synchronization."));
     }
 
@@ -260,8 +245,6 @@ private:
         const QString actionsPath = QStringLiteral(":/RibbonExample/actions_%1.json").arg(suffix);
         const QString ribbonPath = QStringLiteral(":/RibbonExample/ribbon_%1.json").arg(suffix);
 
-        // QRibbonHelper currently loads action metadata and layout metadata together.
-        // The example intentionally ignores JSON layout and uses the public QAction-first API.
         if (!m_helper->loadFromResources(ribbonPath, actionsPath)) {
             statusBar()->showMessage(m_helper->errorString());
             return;
@@ -276,8 +259,8 @@ private:
             ? QStringLiteral("RibbonLib 示例")
             : QStringLiteral("RibbonLib Example"));
         statusBar()->showMessage(isChinese()
-            ? QStringLiteral("Ribbon 已使用 C++ + QAction API 构建")
-            : QStringLiteral("Ribbon built with the C++ + QAction API"),
+            ? QStringLiteral("Ribbon 已使用 QAction-first API 构建")
+            : QStringLiteral("Ribbon built with the QAction-first API"),
             2500);
     }
 
@@ -289,11 +272,8 @@ private:
 
     void resetZoom()
     {
-        if (m_zoomSteps > 0) {
-            m_editor->zoomOut(m_zoomSteps);
-        } else if (m_zoomSteps < 0) {
-            m_editor->zoomIn(-m_zoomSteps);
-        }
+        if (m_zoomSteps > 0) m_editor->zoomOut(m_zoomSteps);
+        else if (m_zoomSteps < 0) m_editor->zoomIn(-m_zoomSteps);
         m_zoomSteps = 0;
     }
 
@@ -317,10 +297,7 @@ private:
             showSimpleStatus(QStringLiteral("Sample document opened"), QStringLiteral("已打开示例文档"));
             return;
         }
-        if (id == QStringLiteral("file.save")) {
-            showSimpleStatus(QStringLiteral("Document saved"), QStringLiteral("文档已保存"));
-            return;
-        }
+        if (id == QStringLiteral("file.save")) { showSimpleStatus(QStringLiteral("Document saved"), QStringLiteral("文档已保存")); return; }
         if (id == QStringLiteral("file.close")) { QTimer::singleShot(0, this, [this]() { close(); }); return; }
         if (id == QStringLiteral("edit.undo")) { m_editor->undo(); return; }
         if (id == QStringLiteral("edit.redo")) { m_editor->redo(); return; }
@@ -365,10 +342,7 @@ private:
             }
             return;
         }
-        if (id == QStringLiteral("tools.refresh")) {
-            showSimpleStatus(QStringLiteral("Example state refreshed"), QStringLiteral("示例状态已刷新"));
-            return;
-        }
+        if (id == QStringLiteral("tools.refresh")) { showSimpleStatus(QStringLiteral("Example state refreshed"), QStringLiteral("示例状态已刷新")); return; }
         if (id == QStringLiteral("tools.settings")) {
             QMessageBox::information(this,
                                      isChinese() ? QStringLiteral("设置") : QStringLiteral("Settings"),
