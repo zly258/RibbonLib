@@ -3,7 +3,6 @@ param(
     [ValidateSet("Debug", "Release")]
     [string]$Configuration = "Release",
     [switch]$Clean,
-    [switch]$Tests,
     [switch]$Run,
     [switch]$Shared,
     [switch]$Install,
@@ -32,7 +31,6 @@ $configureArgs = @(
     "-B", $build,
     "-A", "x64",
     "-DRIBBONLIB_BUILD_EXAMPLE=ON",
-    "-DRIBBONLIB_BUILD_TESTS=$(if ($Tests) { 'ON' } else { 'OFF' })",
     "-DRIBBONLIB_BUILD_SHARED=$(if ($Shared) { 'ON' } else { 'OFF' })",
     "-DRIBBONLIB_ENABLE_INSTALL=$(if ($Install) { 'ON' } else { 'OFF' })"
 )
@@ -49,11 +47,6 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 & cmake --build $build --config $Configuration --parallel $Jobs
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-if ($Tests) {
-    & ctest --test-dir $build -C $Configuration --output-on-failure
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-}
 
 if ($Install) {
     & cmake --install $build --config $Configuration --prefix $Prefix

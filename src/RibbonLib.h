@@ -8,9 +8,7 @@
 #include "QRibbonHelper.h"
 #include "QRibbonMenu.h"
 #include "QRibbonSplitButton.h"
-#include "QRibbonStateManager.h"
 #include "QRibbonTab.h"
 #include "QRibbonWidget.h"
-#include "RibbonAction.h"
 
 #endif // RIBBONLIB_H

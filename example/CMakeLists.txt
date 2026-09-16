@@ -1,7 +1,4 @@
-add_executable(RibbonExample
-    main.cpp
-    example.qrc
-)
+add_executable(RibbonExample main.cpp)
 
 target_link_libraries(RibbonExample PRIVATE RibbonLib::RibbonLib)
 target_compile_features(RibbonExample PRIVATE cxx_std_17)

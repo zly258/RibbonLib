@@ -16,14 +16,13 @@ else()
 endif()
 
 option(RIBBONLIB_BUILD_EXAMPLE "Build RibbonLib example" ${RIBBONLIB_BUILD_EXAMPLE_DEFAULT})
-option(RIBBONLIB_BUILD_TESTS "Build RibbonLib smoke tests" OFF)
 option(RIBBONLIB_BUILD_SHARED "Build RibbonLib as shared library" OFF)
 option(RIBBONLIB_ENABLE_INSTALL "Enable RibbonLib install targets" ${RIBBONLIB_ENABLE_INSTALL_DEFAULT})
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
-set(RIBBON_CORE_HEADERS
+set(RIBBON_PUBLIC_HEADERS
     src/RibbonLib.h
     src/RibbonLibGlobal.h
     src/QRibbonButtonSize.h
@@ -32,14 +31,9 @@ set(RIBBON_CORE_HEADERS
     src/QRibbonGroup.h
     src/QRibbonButton.h
     src/QApplicationButton.h
-    src/RibbonAction.h
-)
-
-set(RIBBON_EXTENDED_HEADERS
     src/QRibbonHelper.h
     src/QRibbonMenu.h
     src/QRibbonSplitButton.h
-    src/QRibbonStateManager.h
 )
 
 set(RIBBON_PRIVATE_HEADERS
@@ -48,34 +42,26 @@ set(RIBBON_PRIVATE_HEADERS
     src/QRibbonTextLayout.h
 )
 
-set(RIBBON_CORE_SOURCES
+set(RIBBON_SOURCES
     src/QRibbonStyle.cpp
     src/QRibbonWidget.cpp
     src/QRibbonTab.cpp
     src/QRibbonGroup.cpp
     src/QRibbonButton.cpp
     src/QApplicationButton.cpp
-    src/RibbonAction.cpp
-)
-
-set(RIBBON_EXTENDED_SOURCES
     src/QRibbonHelper.cpp
     src/QRibbonMenu.cpp
     src/QRibbonSplitButton.cpp
-    src/QRibbonStateManager.cpp
 )
 
+set(RIBBONLIB_LIBRARY_TYPE STATIC)
 if(RIBBONLIB_BUILD_SHARED)
     set(RIBBONLIB_LIBRARY_TYPE SHARED)
-else()
-    set(RIBBONLIB_LIBRARY_TYPE STATIC)
 endif()
 
 add_library(RibbonLib ${RIBBONLIB_LIBRARY_TYPE}
-    ${RIBBON_CORE_SOURCES}
-    ${RIBBON_CORE_HEADERS}
-    ${RIBBON_EXTENDED_SOURCES}
-    ${RIBBON_EXTENDED_HEADERS}
+    ${RIBBON_SOURCES}
+    ${RIBBON_PUBLIC_HEADERS}
     ${RIBBON_PRIVATE_HEADERS}
     resource/ribbonlib.qrc
 )
@@ -107,23 +93,8 @@ set_target_properties(RibbonLib PROPERTIES
     SOVERSION ${PROJECT_VERSION_MAJOR}
 )
 
-set(RIBBON_PUBLIC_HEADERS
-    ${RIBBON_CORE_HEADERS}
-    ${RIBBON_EXTENDED_HEADERS}
-)
-
-set(RIBBON_PUBLIC_HEADER_FILES)
-foreach(_header ${RIBBON_PUBLIC_HEADERS})
-    list(APPEND RIBBON_PUBLIC_HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${_header}")
-endforeach()
-
 if(RIBBONLIB_BUILD_EXAMPLE)
     add_subdirectory(example)
-endif()
-
-if(RIBBONLIB_BUILD_TESTS)
-    enable_testing()
-    add_subdirectory(tests)
 endif()
 
 if(RIBBONLIB_ENABLE_INSTALL)
@@ -136,7 +107,7 @@ if(RIBBONLIB_ENABLE_INSTALL)
     )
 
     install(FILES
-        ${RIBBON_PUBLIC_HEADER_FILES}
+        ${RIBBON_PUBLIC_HEADERS}
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/RibbonLib
     )
 

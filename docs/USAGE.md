@@ -1,17 +1,27 @@
-# RibbonLib Detailed Usage Guide
+# RibbonLib Detailed Usage
 
-[README](../README.md) | [中文文档](./USAGE.zh-CN.md)
+[README](../README.md) | [中文](./USAGE.zh-CN.md)
 
-RibbonLib is a focused Qt Widgets Ribbon library. The recommended model is **QAction first**: application code owns commands and business state; RibbonLib owns Ribbon presentation, layout, geometry and local styling.
+RibbonLib is designed around one rule: the host application owns commands and state through `QAction`; RibbonLib only renders those commands as a Ribbon.
 
-## 1. Integration
+## 1. Requirements
+
+- CMake 3.16+
+- C++17
+- Qt 5.14.2+ or Qt 6
+- Qt Widgets
+- Windows or Linux
+
+## 2. Integration
+
+Source dependency:
 
 ```cmake
 add_subdirectory(thirdparty/RibbonLib)
 target_link_libraries(MyApp PRIVATE RibbonLib::RibbonLib)
 ```
 
-or:
+Installed package:
 
 ```cmake
 find_package(RibbonLib CONFIG REQUIRED)
@@ -24,32 +34,52 @@ Use the umbrella header:
 #include <RibbonLib.h>
 ```
 
-Consumers do not copy RibbonLib QSS and do not apply RibbonLib styles to the whole `QApplication`.
+No external Ribbon stylesheet is required.
 
-## 2. QAction-first construction
+## 3. QAction-first construction
 
-Define application commands once:
+Create normal application actions first:
 
 ```cpp
 auto *openAction = new QAction(openIcon, tr("Open"), this);
 openAction->setShortcut(QKeySequence::Open);
 connect(openAction, &QAction::triggered,
         this, &MainWindow::openDocument);
+
+auto *axesAction = new QAction(axesIcon, tr("Axes"), this);
+axesAction->setCheckable(true);
+axesAction->setChecked(true);
+connect(axesAction, &QAction::toggled,
+        this, &MainWindow::setAxesVisible);
 ```
 
-Describe Ribbon structure separately:
+Then describe Ribbon structure:
 
 ```cpp
 auto *ribbon = new QRibbonWidget(this);
 setMenuWidget(ribbon);
 
 auto *home = ribbon->addTab(tr("Home"), "home");
+
 auto *document = home->addGroup(tr("Document"));
 document->addAction(openAction, QRibbonButtonSize::Large);
-document->addActions({saveAction, closeAction}, QRibbonButtonSize::Small);
+
+auto *view = home->addGroup(tr("View"));
+view->addActions({axesAction, wireframeAction, perspectiveAction},
+                 QRibbonButtonSize::Small);
 ```
 
-Or build a compact group directly:
+The bound Ribbon button follows the action's text, icon, enabled, visible, checkable, checked, shortcut, tooltip and status tip. Triggering the Ribbon button triggers the same `QAction`.
+
+## 4. Tabs and groups
+
+```cpp
+auto *home = ribbon->addTab(tr("Home"), "home");
+auto *create = home->addGroup(tr("Create"));
+auto *modify = home->addGroup(tr("Modify"));
+```
+
+For a compact group of actions:
 
 ```cpp
 home->addGroup(tr("Edit"),
@@ -57,13 +87,30 @@ home->addGroup(tr("Edit"),
                QRibbonButtonSize::Small);
 ```
 
-The bound Ribbon button synchronizes `text`, `icon`, `enabled`, `visible`, `checkable`, `checked`, `shortcut`, `toolTip` and `statusTip` from the QAction. Triggering the Ribbon button triggers the same QAction.
+Stable tab IDs are useful when selecting tabs in code:
 
-## 3. Ribbon-only display text
+```cpp
+ribbon->setCurrentTab("home");
+```
 
-`QAction::text()` should remain a clean command name because the same QAction may appear in menus, Quick Access, context menus and other Qt UI.
+## 5. Large and Small buttons
 
-Ribbon-specific text can be overridden without changing the QAction:
+RibbonLib intentionally exposes only two command sizes:
+
+```cpp
+QRibbonButtonSize::Large
+QRibbonButtonSize::Small
+```
+
+Large buttons use a 32 px icon area above the text. Small buttons are arranged in three compact rows per column.
+
+Button width is content-driven. RibbonLib does not impose a fixed minimum width on Large, Small or Split buttons. Width is calculated from icon width, text width, padding and the Split arrow area when present.
+
+## 6. Explicit Large display text
+
+Large labels never wrap automatically. Without an explicit line break, the label stays on one line and the button grows to fit it.
+
+When a two-line Ribbon label is desirable, use presentation-only `displayText`:
 
 ```cpp
 auto *button = group->addAction(settingsAction,
@@ -71,7 +118,7 @@ auto *button = group->addAction(settingsAction,
 button->setDisplayText(tr("Model\nSettings"));
 ```
 
-Equivalent convenience form:
+or:
 
 ```cpp
 group->addAction(settingsAction,
@@ -79,92 +126,69 @@ group->addAction(settingsAction,
                  tr("Model\nSettings"));
 ```
 
-Use `clearDisplayText()` to return to `QAction::text()`.
+This does not change `QAction::text()`, so menus and other UI continue to display the normal command name.
 
-## 4. Large text rule: explicit breaks only
+Only the first explicit line break is preserved. Additional breaks are normalized into spaces. Small buttons use one line.
 
-Large buttons no longer perform automatic wrapping.
+To return to the QAction text:
 
-Rules:
+```cpp
+button->clearDisplayText();
+```
 
-- no `\n` -> one visual line;
-- one explicit `\n` -> two visual lines;
-- additional line breaks are normalized into spaces;
-- Small buttons remain single-line;
-- long one-line Large text increases button width instead of being wrapped automatically;
-- use Ribbon-only display text when a manually controlled two-line label is desired.
+## 7. Checkable commands
 
-This makes layout deterministic across languages, fonts and DPI settings.
+Put checked state on the QAction:
 
-## 5. Width calculation
+```cpp
+auto *wireframeAction = new QAction(icon, tr("Wireframe"), this);
+wireframeAction->setCheckable(true);
+wireframeAction->setChecked(false);
 
-Ribbon buttons have no fixed minimum width.
+group->addAction(wireframeAction, QRibbonButtonSize::Small);
+```
 
-Normal button width is calculated from:
+Do not maintain a second checked state in application code for the Ribbon control.
 
-- icon width when present;
-- actual display-text width;
-- icon/text spacing when both are present;
-- horizontal padding.
-
-Split buttons additionally reserve the dropdown-arrow region.
-
-This means short commands stay compact and long commands receive the width they actually need. A `QRibbonGroup` may still become wider than its content when required to display the group title.
-
-## 6. Split Button QAction-first
-
-Create a menu from existing actions:
+## 8. Split Button
 
 ```cpp
 auto *menu = new QRibbonMenu(group);
-menu->addAction(createPlateAction);
-menu->addAction(createBeamAction);
-menu->addAction(createColumnAction);
+menu->addAction(headingAction);
+menu->addAction(listAction);
+menu->addAction(tableAction);
+
+group->addSplitAction(headingAction,
+                      menu,
+                      QRibbonButtonSize::Large,
+                      tr("Insert\nContent"));
 ```
 
-Then create the split button directly from the default QAction:
+The main area triggers the default action. The arrow opens the menu. Selecting a menu action makes it the current default action. The optional Ribbon `displayText` remains presentation-only.
+
+You can also construct the control directly:
 
 ```cpp
-auto *split = group->addSplitAction(createPlateAction,
-                                    menu,
-                                    QRibbonButtonSize::Large,
-                                    tr("Create\nMember"));
-```
-
-Or construct the widget directly:
-
-```cpp
-auto *split = new QRibbonSplitButton(createPlateAction,
+auto *split = new QRibbonSplitButton(defaultAction,
                                      menu,
                                      QRibbonButtonSize::Large,
                                      group);
 ```
 
-The primary area triggers `defaultAction()`. The dropdown opens the supplied menu. When the default action changes, icon/state are synchronized. Ribbon-only display text remains independent from `QAction::text()`.
-
-`setDefaultAction()` no longer requires the menu to be set first, so command binding and menu assignment are independent.
-
-## 7. Large and Small layout
-
-Small controls are placed in deterministic three-row columns. Large controls occupy the full command height. Height, icon size and vertical metrics remain library-controlled; only width follows actual content.
-
-Use Large for visually important commands and Small for compact command sets. Do not use Large merely to force a wider control.
-
-## 8. Checkable state
-
-Prefer QAction as the single state source:
+## 9. Application Menu
 
 ```cpp
-auto *wireframe = new QAction(wireframeIcon, tr("Wireframe"), this);
-wireframe->setCheckable(true);
-wireframe->setChecked(false);
+auto *menu = new QRibbonMenu(ribbon);
+menu->addAction(openAction);
+menu->addAction(saveAction);
+menu->addSeparator();
+menu->addAction(closeAction);
 
-group->addAction(wireframe, QRibbonButtonSize::Small);
+ribbon->applicationButton()->setText(tr("File"));
+ribbon->applicationButton()->setApplicationMenu(menu);
 ```
 
-Changing QAction state from a menu, shortcut or business layer updates the Ribbon presentation automatically.
-
-## 9. Quick Access
+## 10. Quick Access bar
 
 ```cpp
 ribbon->addAccessBarAction(saveAction);
@@ -172,64 +196,145 @@ ribbon->addAccessBarAction(undoAction);
 ribbon->addAccessBarAction(redoAction);
 ```
 
-Actions with icons are shown icon-only. Text-only actions remain text-only.
+Actions with icons render as icon-only Quick Access buttons. Text-only actions remain text-only.
 
-## 10. Application Menu
+## 11. Context tabs
 
 ```cpp
-auto *menu = new QRibbonMenu(ribbon);
-menu->addAction(openAction);
-menu->addAction(saveAction);
-ribbon->applicationButton()->setApplicationMenu(menu);
+const int index = ribbon->indexOfTabId("tools");
+ribbon->setTabContext(index, tr("Context"), QColor("#0078d4"));
 ```
 
-The same QAction instances can be used in Ribbon groups, Application Menu and Quick Access.
+Clear it with:
 
-## 11. Custom widgets
+```cpp
+ribbon->clearTabContext(index);
+```
 
-`addWidget`, `addLargeWidget` and `addSmallWidget` remain available for non-command controls such as combo boxes and spin boxes. For normal commands, prefer `addAction()` / `addActions()`.
+The host decides when context tabs should appear or become active.
 
-## 12. JSON
+## 12. Custom widgets
 
-JSON-driven construction remains supported through `QRibbonHelper`, but it is optional. Direct C++ + QAction construction is simpler when the host already owns a command layer.
+For controls such as combo boxes or spin boxes:
+
+```cpp
+group->addSmallWidget(comboBox);
+group->addLargeWidget(customWidget);
+```
+
+Normal commands should still use `addAction()`.
+
+## 13. Optional JSON loader
+
+`QRibbonHelper` is optional. It is intended only for applications that genuinely need data-driven UI definitions.
+
+Action metadata and layout are loaded independently:
 
 ```cpp
 QRibbonHelper helper;
-if (!helper.loadFromResources(ribbonPath, actionsPath)) {
+
+if (!helper.loadActions(":/ui/actions.json")) {
     qWarning() << helper.errorString();
-    return;
+}
+if (!helper.loadLayout(":/ui/ribbon.json")) {
+    qWarning() << helper.errorString();
 }
 helper.buildRibbon(ribbon);
 ```
 
-## 13. RibbonAction
+Minimal actions JSON:
 
-`RibbonAction` remains optional. Use it only when its command abstraction matches the host architecture. Applications that already use QAction or another command system do not need to adopt it.
-
-## 14. Styling and DPI
-
-RibbonLib owns its Ribbon-scoped QSS and deterministic vertical metrics. Consumers should not copy the QSS, manually tune button heights, or compensate for 125% / 150% scaling in host code.
-
-## 15. Migration
-
-Old manual code:
-
-```cpp
-auto *button = new QRibbonButton(icon, tr("Open"), QRibbonButtonSize::Large, group);
-connect(button, &QRibbonButton::clicked, this, &MainWindow::openDocument);
-group->addButton(button);
+```json
+{
+  "actions": [
+    {
+      "id": "file.open",
+      "name": "Open",
+      "description": "Open a document",
+      "icon": "qt:open",
+      "shortcut": "Ctrl+O"
+    }
+  ]
+}
 ```
 
-Preferred code:
+Minimal layout JSON:
 
-```cpp
-auto *openAction = new QAction(icon, tr("Open"), this);
-connect(openAction, &QAction::triggered, this, &MainWindow::openDocument);
-group->addAction(openAction, QRibbonButtonSize::Large);
+```json
+{
+  "ribbon": {
+    "tabs": [
+      {
+        "id": "home",
+        "title": "Home",
+        "panels": [
+          {
+            "title": "Document",
+            "items": [
+              { "id": "file.open", "style": "large" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
 
-If Ribbon needs an intentional two-line label, use `setDisplayText()` rather than inserting a newline into `QAction::text()`.
+Supported placement fields are intentionally small: `id`, `style`, optional `displayText`, and optional `menu`. `style` is `large` or `small`.
 
-## 16. Scope
+Example explicit two-line placement:
 
-RibbonLib stays deliberately small: no Dock framework, application command bus, plugin framework, MVVM framework or global theme engine.
+```json
+{
+  "id": "tools.settings",
+  "style": "large",
+  "displayText": "Application\nSettings"
+}
+```
+
+## 14. Qt standard icons in JSON
+
+Use `qt:<name>` in action metadata. Common aliases include:
+
+`file`, `folder`, `home`, `open`, `save`, `close`, `apply`, `cancel`, `reset`, `help`, `info`, `warning`, `error`, `question`, `back`, `forward`, `up`, `down`, `reload`, `stop`, `play`, `pause`, `trash`, `settings`, `list`, `maximize`.
+
+Qt `SP_...` names supported by RibbonLib are also accepted.
+
+## 15. Styling and DPI
+
+RibbonLib embeds its own QSS resource and applies it locally. Consumers do not copy the QSS, call `Q_INIT_RESOURCE()`, or apply Ribbon styles globally.
+
+The library owns Ribbon heights, icon metrics, three-row Small layout, state borders and group spacing. Application code should not patch these values for 125% or 150% scaling.
+
+## 16. Build
+
+Linux:
+
+```bash
+./build.sh
+./build.sh Debug --clean
+./build.sh Release --run
+./build.sh Release --shared
+./build.sh Release --install
+```
+
+Windows:
+
+```powershell
+.\build.ps1
+.\build.ps1 -Configuration Debug -Clean
+.\build.ps1 -Run
+.\build.ps1 -Shared
+.\build.ps1 -Install
+```
+
+CMake options:
+
+- `RIBBONLIB_BUILD_EXAMPLE`
+- `RIBBONLIB_BUILD_SHARED`
+- `RIBBONLIB_ENABLE_INSTALL`
+
+## 17. Recommended boundary
+
+RibbonLib should remain a presentation library. Keep document state, application settings, command routing, plugins and business logic outside it. If an existing `QAction` can represent a command, reuse that action instead of introducing another command abstraction.

@@ -9,7 +9,6 @@ out/
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
-CTestTestfile.cmake
 Makefile
 CMakeUserPresets.json
 *.ninja

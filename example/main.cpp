@@ -3,13 +3,16 @@
 #include <QAction>
 #include <QApplication>
 #include <QDate>
+#include <QHash>
 #include <QMainWindow>
 #include <QMessageBox>
 #include <QStatusBar>
+#include <QStyle>
 #include <QTextEdit>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <QtAlgorithms>
 
 #include <RibbonLib.h>
 
@@ -17,7 +20,6 @@ class DemoWindow final : public QMainWindow
 {
 public:
     DemoWindow()
-        : m_helper(new QRibbonHelper(this))
     {
         resize(1180, 760);
 
@@ -32,65 +34,93 @@ public:
         m_ribbonLayout->setSpacing(0);
         setMenuWidget(m_ribbonHost);
 
-        connect(m_helper, &QRibbonHelper::actionTriggered, this, [this](const QString &id) {
-            handleAction(id);
-        });
-
-        rebuildRibbon();
+        rebuild();
     }
 
 private:
-    bool isChinese() const
+    QString text(const char *english, const char *chinese) const
     {
-        return m_language == QStringLiteral("zh-CN");
+        return m_chinese ? QString::fromUtf8(chinese) : QString::fromLatin1(english);
+    }
+
+    QIcon icon(QStyle::StandardPixmap pixmap) const
+    {
+        return style()->standardIcon(pixmap);
+    }
+
+    QAction *createAction(const QString &id,
+                          const QString &title,
+                          const QIcon &actionIcon = QIcon(),
+                          const QKeySequence &shortcut = QKeySequence(),
+                          bool checkable = false)
+    {
+        auto *result = new QAction(actionIcon, title, this);
+        result->setObjectName(id);
+        result->setShortcut(shortcut);
+        result->setCheckable(checkable);
+        connect(result, &QAction::triggered, this, [this, id]() { handleAction(id); });
+        m_actions.insert(id, result);
+        return result;
     }
 
     QAction *action(const char *id) const
     {
-        return m_helper->action(QString::fromLatin1(id));
+        return m_actions.value(QString::fromLatin1(id), nullptr);
     }
 
     QList<QAction*> actions(std::initializer_list<const char*> ids) const
     {
         QList<QAction*> result;
-        result.reserve(static_cast<int>(ids.size()));
         for (const char *id : ids) {
             if (QAction *a = action(id)) result.append(a);
         }
         return result;
     }
 
-    QRibbonSplitButton *addSplitButton(QRibbonGroup *group,
-                                       const char *displayActionId,
-                                       const char *defaultActionId,
-                                       std::initializer_list<const char*> menuActionIds,
-                                       QRibbonButtonSize size)
+    void createActions()
     {
-        QAction *displayAction = action(displayActionId);
-        QAction *defaultAction = action(defaultActionId);
-        if (!group || !displayAction || !defaultAction) return nullptr;
+        createAction("file.new", text("New", "新建"), icon(QStyle::SP_FileIcon), QKeySequence(QStringLiteral("Ctrl+N")));
+        createAction("file.open", text("Open", "打开"), icon(QStyle::SP_DialogOpenButton), QKeySequence(QStringLiteral("Ctrl+O")));
+        createAction("file.save", text("Save", "保存"), icon(QStyle::SP_DialogSaveButton), QKeySequence(QStringLiteral("Ctrl+S")));
+        createAction("file.close", text("Close", "关闭"), icon(QStyle::SP_DialogCloseButton));
 
-        auto *menu = new QRibbonMenu(group);
-        for (QAction *menuAction : actions(menuActionIds)) menu->addAction(menuAction);
+        createAction("edit.undo", text("Undo", "撤销"), icon(QStyle::SP_ArrowBack), QKeySequence(QStringLiteral("Ctrl+Z")));
+        createAction("edit.redo", text("Redo", "重做"), icon(QStyle::SP_ArrowForward), QKeySequence(QStringLiteral("Ctrl+Y")));
+        createAction("edit.cut", text("Cut", "剪切"), icon(QStyle::SP_DialogCancelButton), QKeySequence(QStringLiteral("Ctrl+X")));
+        createAction("edit.copy", text("Copy", "复制"), icon(QStyle::SP_FileIcon), QKeySequence(QStringLiteral("Ctrl+C")));
+        createAction("edit.paste", text("Paste", "粘贴"), icon(QStyle::SP_DialogApplyButton), QKeySequence(QStringLiteral("Ctrl+V")));
+        createAction("edit.selectAll", text("Select All", "全选"), icon(QStyle::SP_FileDialogListView), QKeySequence(QStringLiteral("Ctrl+A")));
+        createAction("edit.find", text("Find Ribbon", "查找 Ribbon"), icon(QStyle::SP_MessageBoxQuestion), QKeySequence(QStringLiteral("Ctrl+F")));
 
-        auto *button = group->addSplitAction(defaultAction,
-                                             menu,
-                                             size,
-                                             displayAction->text());
-        if (button) button->setIcon(displayAction->icon());
-        return button;
+        createAction("insert.heading", text("Heading", "标题"), icon(QStyle::SP_FileIcon));
+        createAction("insert.list", text("List", "列表"), icon(QStyle::SP_FileDialogListView));
+        createAction("insert.table", text("Table", "表格"), icon(QStyle::SP_FileDialogDetailedView));
+        createAction("insert.link", text("Link", "链接"), icon(QStyle::SP_ArrowForward));
+        createAction("insert.date", text("Date", "日期"), icon(QStyle::SP_MessageBoxInformation));
+
+        createAction("view.zoomIn", text("Zoom In", "放大"), icon(QStyle::SP_ArrowUp));
+        createAction("view.zoomOut", text("Zoom Out", "缩小"), icon(QStyle::SP_ArrowDown));
+        createAction("view.resetZoom", text("Reset Zoom", "重置缩放"), icon(QStyle::SP_DialogResetButton));
+        createAction("view.readOnly", text("Read Only", "只读"), icon(QStyle::SP_MessageBoxInformation), QKeySequence(), true);
+        createAction("view.fullscreen", text("Full Screen", "全屏"), icon(QStyle::SP_TitleBarMaxButton), QKeySequence(), true);
+
+        createAction("tools.refresh", text("Refresh", "刷新"), icon(QStyle::SP_BrowserReload));
+        createAction("tools.settings", text("Application Settings", "应用设置"), icon(QStyle::SP_FileDialogDetailedView));
+
+        createAction("help.about", text("About", "关于"), icon(QStyle::SP_MessageBoxInformation));
+        createAction("language.switch", m_chinese ? QStringLiteral("English") : QStringLiteral("中文"));
     }
 
     void buildApplicationMenu()
     {
-        auto *button = m_ribbon->applicationButton();
-        if (!button) return;
+        QApplicationButton *button = m_ribbon->applicationButton();
+        button->setText(text("File", "文件"));
 
-        button->setText(isChinese() ? QStringLiteral("文件") : QStringLiteral("File"));
         auto *menu = new QRibbonMenu(button);
         for (QAction *a : actions({"file.new", "file.open", "file.save"})) menu->addAction(a);
         menu->addSeparator();
-        for (QAction *a : actions({"language.switch", "help.about"})) menu->addAction(a);
+        menu->addAction(action("language.switch"));
+        menu->addAction(action("help.about"));
         menu->addSeparator();
         menu->addAction(action("file.close"));
         button->setApplicationMenu(menu);
@@ -105,169 +135,113 @@ private:
 
     void buildHomeTab()
     {
-        auto *tab = m_ribbon->addTab(isChinese() ? QStringLiteral("主页") : QStringLiteral("Home"),
-                                     QStringLiteral("home"));
+        QRibbonTab *tab = m_ribbon->addTab(text("Home", "主页"), QStringLiteral("home"));
 
-        auto *document = tab->addGroup(isChinese() ? QStringLiteral("文档") : QStringLiteral("Document"));
+        auto *document = tab->addGroup(text("Document", "文档"));
         document->addActions(actions({"file.new", "file.open", "file.save"}), QRibbonButtonSize::Large);
 
-        auto *clipboard = tab->addGroup(isChinese() ? QStringLiteral("剪贴板") : QStringLiteral("Clipboard"));
+        auto *clipboard = tab->addGroup(text("Clipboard", "剪贴板"));
         clipboard->addAction(action("edit.paste"), QRibbonButtonSize::Large);
         clipboard->addActions(actions({"edit.cut", "edit.copy", "edit.selectAll"}), QRibbonButtonSize::Small);
 
-        tab->addGroup(isChinese() ? QStringLiteral("编辑") : QStringLiteral("Edit"),
+        tab->addGroup(text("Edit", "编辑"),
                       actions({"edit.undo", "edit.redo", "edit.find"}),
                       QRibbonButtonSize::Small);
     }
 
     void buildInsertTab()
     {
-        auto *tab = m_ribbon->addTab(isChinese() ? QStringLiteral("插入") : QStringLiteral("Insert"),
-                                     QStringLiteral("insert"));
-        auto *group = tab->addGroup(isChinese() ? QStringLiteral("内容") : QStringLiteral("Content"));
-        addSplitButton(group,
-                       "insert.content",
-                       "insert.heading",
-                       {"insert.heading", "insert.list", "insert.table"},
-                       QRibbonButtonSize::Large);
+        QRibbonTab *tab = m_ribbon->addTab(text("Insert", "插入"), QStringLiteral("insert"));
+        auto *group = tab->addGroup(text("Content", "内容"));
+
+        auto *menu = new QRibbonMenu(group);
+        menu->addAction(action("insert.heading"));
+        menu->addAction(action("insert.list"));
+        menu->addAction(action("insert.table"));
+        group->addSplitAction(action("insert.heading"),
+                              menu,
+                              QRibbonButtonSize::Large,
+                              text("Insert\nContent", "插入\n内容"));
+
         group->addAction(action("insert.link"), QRibbonButtonSize::Large);
         group->addAction(action("insert.date"), QRibbonButtonSize::Large);
     }
 
     void buildViewTab()
     {
-        auto *tab = m_ribbon->addTab(isChinese() ? QStringLiteral("视图") : QStringLiteral("View"),
-                                     QStringLiteral("view"));
-        tab->addGroup(isChinese() ? QStringLiteral("缩放") : QStringLiteral("Zoom"),
+        QRibbonTab *tab = m_ribbon->addTab(text("View", "视图"), QStringLiteral("view"));
+        tab->addGroup(text("Zoom", "缩放"),
                       actions({"view.zoomIn", "view.zoomOut", "view.resetZoom"}),
                       QRibbonButtonSize::Small);
 
-        auto *window = tab->addGroup(isChinese() ? QStringLiteral("窗口") : QStringLiteral("Window"));
+        auto *window = tab->addGroup(text("Window", "窗口"));
         window->addActions(actions({"view.fullscreen", "view.readOnly"}), QRibbonButtonSize::Large);
-    }
-
-    void buildTestsTab()
-    {
-        auto *tab = m_ribbon->addTab(isChinese() ? QStringLiteral("测试") : QStringLiteral("Tests"),
-                                     QStringLiteral("tests"));
-
-        tab->addGroup(isChinese() ? QStringLiteral("小按钮勾选") : QStringLiteral("Small checks"),
-                      actions({"test.checkedTop", "test.uncheckedMiddle", "test.checkedBottom",
-                               "test.toggleTop", "test.toggleMiddle", "test.toggleBottom"}),
-                      QRibbonButtonSize::Small);
-
-        tab->addGroup(isChinese() ? QStringLiteral("大按钮状态") : QStringLiteral("Large states"),
-                      actions({"test.largeChecked", "test.largeToggle", "test.disabledChecked", "test.disabled"}),
-                      QRibbonButtonSize::Large);
-
-        auto *mixed = tab->addGroup(isChinese() ? QStringLiteral("混合布局") : QStringLiteral("Mixed layout"));
-        mixed->addAction(action("test.nativeFolder"), QRibbonButtonSize::Large);
-        mixed->addActions(actions({"test.longSmall", "test.nativeReload", "test.nativeSettings"}),
-                          QRibbonButtonSize::Small);
-        mixed->addAction(action("test.longLarge"),
-                         QRibbonButtonSize::Large,
-                         isChinese() ? QStringLiteral("较长的\n大按钮")
-                                     : QStringLiteral("Long Large\nButton"));
-
-        auto *split = tab->addGroup(isChinese() ? QStringLiteral("拆分按钮") : QStringLiteral("Split buttons"));
-        addSplitButton(split,
-                       "test.splitLarge",
-                       "insert.heading",
-                       {"insert.heading", "insert.list", "insert.table"},
-                       QRibbonButtonSize::Large);
-        addSplitButton(split,
-                       "test.splitSmall",
-                       "view.zoomIn",
-                       {"view.zoomIn", "view.zoomOut", "view.resetZoom"},
-                       QRibbonButtonSize::Small);
-
-        tab->addGroup(isChinese() ? QStringLiteral("Qt 原生图标") : QStringLiteral("Qt native icons"),
-                      actions({"test.nativeFile", "test.nativeFolder", "test.nativeHome",
-                               "test.nativeReload", "test.nativeSettings", "test.nativeTrash"}),
-                      QRibbonButtonSize::Small);
     }
 
     void buildToolsTab()
     {
-        auto *tab = m_ribbon->addTab(isChinese() ? QStringLiteral("工具") : QStringLiteral("Tools"),
-                                     QStringLiteral("tools"));
-        tab->addGroup(isChinese() ? QStringLiteral("实用工具") : QStringLiteral("Utilities"),
-                      actions({"tools.refresh", "tools.settings"}),
-                      QRibbonButtonSize::Large);
+        QRibbonTab *tab = m_ribbon->addTab(text("Tools", "工具"), QStringLiteral("tools"));
+        auto *group = tab->addGroup(text("Utilities", "实用工具"));
+        group->addAction(action("tools.refresh"), QRibbonButtonSize::Large);
+        group->addAction(action("tools.settings"),
+                         QRibbonButtonSize::Large,
+                         text("Application\nSettings", "应用\n设置"));
     }
 
     void buildHelpTab()
     {
-        auto *tab = m_ribbon->addTab(isChinese() ? QStringLiteral("帮助") : QStringLiteral("Help"),
-                                     QStringLiteral("help"));
-        auto *group = tab->addGroup(isChinese() ? QStringLiteral("帮助") : QStringLiteral("Help"));
+        QRibbonTab *tab = m_ribbon->addTab(text("Help", "帮助"), QStringLiteral("help"));
+        auto *group = tab->addGroup(text("Help", "帮助"));
         group->addAction(action("help.about"), QRibbonButtonSize::Large);
         group->addAction(action("language.switch"), QRibbonButtonSize::Small);
     }
 
-    void buildRibbonFromActions()
+    void updateDescription()
     {
-        buildApplicationMenu();
-        buildQuickAccess();
-        buildHomeTab();
-        buildInsertTab();
-        buildViewTab();
-        buildTestsTab();
-        buildToolsTab();
-        buildHelpTab();
-    }
-
-    void updateExampleText()
-    {
-        m_editor->setPlainText(isChinese()
+        m_editor->setPlainText(m_chinese
             ? QStringLiteral(
                 "RibbonLib 示例\n\n"
-                "本示例使用 C++ + QAction 构建 Ribbon 布局。\n"
-                "Large 按钮不自动换行；测试页中的两行 Large 文本使用 Ribbon displayText 显式指定。\n"
-                "Split Button 使用 QAction-first API 构建，按钮宽度完全按实际内容计算。\n\n"
-                "推荐业务项目维护 QAction，RibbonLib 只负责展示、布局和状态同步。")
+                "示例直接使用 C++ + QAction 构建 Ribbon。\n"
+                "业务命令只维护一份 QAction，Ribbon、文件菜单和快速访问栏复用同一命令状态。\n"
+                "Large 按钮不会自动换行；需要两行时，通过 Ribbon displayText 显式指定换行。\n"
+                "RibbonLib 自己处理布局、局部样式、状态显示和 DPI。")
             : QStringLiteral(
                 "RibbonLib Example\n\n"
-                "This example builds Ribbon layout with C++ + QAction.\n"
-                "Large buttons do not wrap automatically; the two-line Large test uses explicit Ribbon displayText.\n"
-                "Split Buttons use the QAction-first API and button width follows actual content.\n\n"
-                "Recommended application code owns QActions; RibbonLib owns presentation, layout and state synchronization."));
+                "The example builds the Ribbon directly with C++ + QAction.\n"
+                "Application commands live in one QAction and are reused by the Ribbon, File menu and Quick Access bar.\n"
+                "Large buttons never wrap automatically; use Ribbon displayText when an explicit two-line label is wanted.\n"
+                "RibbonLib owns layout, local styling, state presentation and DPI behavior."));
     }
 
-    void rebuildRibbon()
+    void rebuild()
     {
         if (m_ribbon) {
             delete m_ribbon;
             m_ribbon = nullptr;
         }
+        qDeleteAll(m_actions);
+        m_actions.clear();
 
-        const QString suffix = isChinese() ? QStringLiteral("zh-CN") : QStringLiteral("en");
-        const QString actionsPath = QStringLiteral(":/RibbonExample/actions_%1.json").arg(suffix);
-        const QString ribbonPath = QStringLiteral(":/RibbonExample/ribbon_%1.json").arg(suffix);
-
-        if (!m_helper->loadFromResources(ribbonPath, actionsPath)) {
-            statusBar()->showMessage(m_helper->errorString());
-            return;
-        }
-
+        createActions();
         m_ribbon = new QRibbonWidget(m_ribbonHost);
         m_ribbonLayout->addWidget(m_ribbon);
-        buildRibbonFromActions();
-        updateExampleText();
 
-        setWindowTitle(isChinese()
-            ? QStringLiteral("RibbonLib 示例")
-            : QStringLiteral("RibbonLib Example"));
-        statusBar()->showMessage(isChinese()
-            ? QStringLiteral("Ribbon 已使用 QAction-first API 构建")
-            : QStringLiteral("Ribbon built with the QAction-first API"),
-            2500);
+        buildApplicationMenu();
+        buildQuickAccess();
+        buildHomeTab();
+        buildInsertTab();
+        buildViewTab();
+        buildToolsTab();
+        buildHelpTab();
+        updateDescription();
+
+        setWindowTitle(m_chinese ? QStringLiteral("RibbonLib 示例") : QStringLiteral("RibbonLib Example"));
     }
 
-    void scheduleLanguageSwitch()
+    void switchLanguage()
     {
-        m_language = isChinese() ? QStringLiteral("en") : QStringLiteral("zh-CN");
-        QTimer::singleShot(0, this, [this]() { rebuildRibbon(); });
+        m_chinese = !m_chinese;
+        QTimer::singleShot(0, this, [this]() { rebuild(); });
     }
 
     void resetZoom()
@@ -277,96 +251,66 @@ private:
         m_zoomSteps = 0;
     }
 
-    void showSimpleStatus(const QString &english, const QString &chinese)
+    void message(const QString &english, const QString &chinese)
     {
-        statusBar()->showMessage(isChinese() ? chinese : english, 2500);
+        statusBar()->showMessage(m_chinese ? chinese : english, 2500);
     }
 
     void handleAction(const QString &id)
     {
-        if (id == QStringLiteral("language.switch")) { scheduleLanguageSwitch(); return; }
-        if (id == QStringLiteral("file.new")) {
-            m_editor->clear();
-            showSimpleStatus(QStringLiteral("New document"), QStringLiteral("已新建文档"));
-            return;
-        }
+        if (id == QStringLiteral("language.switch")) { switchLanguage(); return; }
+        if (id == QStringLiteral("file.new")) { m_editor->clear(); return; }
         if (id == QStringLiteral("file.open")) {
-            m_editor->setPlainText(isChinese()
-                ? QStringLiteral("示例文档\n\n这是通过 QAction 驱动的 Ribbon“打开”命令载入的示例内容。")
-                : QStringLiteral("Sample document\n\nThis content was loaded by the QAction-driven Ribbon Open command."));
-            showSimpleStatus(QStringLiteral("Sample document opened"), QStringLiteral("已打开示例文档"));
+            m_editor->setPlainText(m_chinese
+                ? QStringLiteral("示例文档\n\n通过同一个 QAction 执行打开命令。")
+                : QStringLiteral("Sample document\n\nThe Open command is executed through the same QAction."));
             return;
         }
-        if (id == QStringLiteral("file.save")) { showSimpleStatus(QStringLiteral("Document saved"), QStringLiteral("文档已保存")); return; }
-        if (id == QStringLiteral("file.close")) { QTimer::singleShot(0, this, [this]() { close(); }); return; }
+        if (id == QStringLiteral("file.save")) { message(QStringLiteral("Saved"), QStringLiteral("已保存")); return; }
+        if (id == QStringLiteral("file.close")) { close(); return; }
         if (id == QStringLiteral("edit.undo")) { m_editor->undo(); return; }
         if (id == QStringLiteral("edit.redo")) { m_editor->redo(); return; }
         if (id == QStringLiteral("edit.cut")) { m_editor->cut(); return; }
         if (id == QStringLiteral("edit.copy")) { m_editor->copy(); return; }
         if (id == QStringLiteral("edit.paste")) { m_editor->paste(); return; }
         if (id == QStringLiteral("edit.selectAll")) { m_editor->selectAll(); return; }
-        if (id == QStringLiteral("edit.find")) {
-            const bool found = m_editor->find(QStringLiteral("Ribbon"));
-            showSimpleStatus(found ? QStringLiteral("Found Ribbon") : QStringLiteral("Ribbon not found"),
-                             found ? QStringLiteral("已找到 Ribbon") : QStringLiteral("未找到 Ribbon"));
-            return;
-        }
-        if (id == QStringLiteral("insert.heading")) { m_editor->insertPlainText(QStringLiteral("\n# Ribbon heading\n")); return; }
-        if (id == QStringLiteral("insert.list")) { m_editor->insertPlainText(QStringLiteral("\n- Item 1\n- Item 2\n- Item 3\n")); return; }
+        if (id == QStringLiteral("edit.find")) { m_editor->find(QStringLiteral("Ribbon")); return; }
+        if (id == QStringLiteral("insert.heading")) { m_editor->insertPlainText(QStringLiteral("\n# Ribbon\n")); return; }
+        if (id == QStringLiteral("insert.list")) { m_editor->insertPlainText(QStringLiteral("\n- A\n- B\n- C\n")); return; }
         if (id == QStringLiteral("insert.table")) { m_editor->insertPlainText(QStringLiteral("\n| A | B |\n|---|---|\n| 1 | 2 |\n")); return; }
         if (id == QStringLiteral("insert.link")) { m_editor->insertPlainText(QStringLiteral("https://www.qt.io/")); return; }
         if (id == QStringLiteral("insert.date")) { m_editor->insertPlainText(QDate::currentDate().toString(Qt::ISODate)); return; }
         if (id == QStringLiteral("view.zoomIn")) { m_editor->zoomIn(1); ++m_zoomSteps; return; }
         if (id == QStringLiteral("view.zoomOut")) { m_editor->zoomOut(1); --m_zoomSteps; return; }
         if (id == QStringLiteral("view.resetZoom")) { resetZoom(); return; }
-        if (id == QStringLiteral("view.readOnly")) {
-            QAction *a = action("view.readOnly");
-            m_editor->setReadOnly(a && a->isChecked());
-            showSimpleStatus(m_editor->isReadOnly() ? QStringLiteral("Read-only mode enabled") : QStringLiteral("Read-only mode disabled"),
-                             m_editor->isReadOnly() ? QStringLiteral("已启用只读模式") : QStringLiteral("已关闭只读模式"));
-            return;
-        }
+        if (id == QStringLiteral("view.readOnly")) { m_editor->setReadOnly(action("view.readOnly")->isChecked()); return; }
         if (id == QStringLiteral("view.fullscreen")) {
-            QAction *a = action("view.fullscreen");
-            if (a && a->isChecked()) showFullScreen(); else showNormal();
+            if (action("view.fullscreen")->isChecked()) showFullScreen(); else showNormal();
             return;
         }
-        if (id.startsWith(QStringLiteral("test."))) {
-            QAction *a = m_helper->action(id);
-            if (a && a->isCheckable()) {
-                const bool checked = a->isChecked();
-                showSimpleStatus(QStringLiteral("%1: %2").arg(a->text(), checked ? QStringLiteral("checked") : QStringLiteral("unchecked")),
-                                 QStringLiteral("%1：%2").arg(a->text(), checked ? QStringLiteral("已勾选") : QStringLiteral("未勾选")));
-            } else {
-                showSimpleStatus(QStringLiteral("Test action: %1").arg(id), QStringLiteral("测试动作：%1").arg(id));
-            }
-            return;
-        }
-        if (id == QStringLiteral("tools.refresh")) { showSimpleStatus(QStringLiteral("Example state refreshed"), QStringLiteral("示例状态已刷新")); return; }
+        if (id == QStringLiteral("tools.refresh")) { message(QStringLiteral("Refreshed"), QStringLiteral("已刷新")); return; }
         if (id == QStringLiteral("tools.settings")) {
             QMessageBox::information(this,
-                                     isChinese() ? QStringLiteral("设置") : QStringLiteral("Settings"),
-                                     isChinese()
-                                         ? QStringLiteral("RibbonLib 只负责 Ribbon；应用设置继续由宿主维护。")
-                                         : QStringLiteral("RibbonLib owns Ribbon presentation; application settings remain in the host."));
+                                     text("Settings", "设置"),
+                                     text("Application settings stay in the host application.",
+                                          "应用设置仍由宿主程序维护。"));
             return;
         }
         if (id == QStringLiteral("help.about")) {
             QMessageBox::about(this,
-                               isChinese() ? QStringLiteral("关于 RibbonLib") : QStringLiteral("About RibbonLib"),
-                               isChinese()
-                                   ? QStringLiteral("一个 QAction-first、轻量、可嵌入的 Qt Widgets Ribbon 控件库。")
-                                   : QStringLiteral("A lightweight, QAction-first, embeddable Qt Widgets Ribbon library."));
+                               text("About RibbonLib", "关于 RibbonLib"),
+                               text("A compact QAction-first Qt Widgets Ribbon library.",
+                                    "一个以 QAction 为核心的轻量 Qt Widgets Ribbon 控件库。"));
         }
     }
 
-    QTextEdit *m_editor { nullptr };
-    QWidget *m_ribbonHost { nullptr };
-    QVBoxLayout *m_ribbonLayout { nullptr };
-    QRibbonWidget *m_ribbon { nullptr };
-    QRibbonHelper *m_helper { nullptr };
-    QString m_language { QStringLiteral("en") };
-    int m_zoomSteps { 0 };
+    QTextEdit *m_editor {nullptr};
+    QWidget *m_ribbonHost {nullptr};
+    QVBoxLayout *m_ribbonLayout {nullptr};
+    QRibbonWidget *m_ribbon {nullptr};
+    QHash<QString, QAction*> m_actions;
+    bool m_chinese {false};
+    int m_zoomSteps {0};
 };
 
 int main(int argc, char *argv[])
